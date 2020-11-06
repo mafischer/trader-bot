@@ -1,0 +1,25 @@
+{
+  "name": "trader-bot",
+  "version": "1.0.0",
+  "description": "Stock trader bot",
+  "bin": {
+    "trader_login": "./login.js"
+  },
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "bot",
+    "stock",
+    "nyse",
+    "nasdaq",
+    "robinhood"
+  ],
+  "author": "Michael Fischer",
+  "license": "ISC",
+  "dependencies": {
+    "robinhood": "^1.6.5",
+    "yargs": "^16.1.0"
+  }
+}

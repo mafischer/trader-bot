@@ -1,0 +1,4 @@
+node_modules
+credentials.json
+.vscode
+.DS_Store
