@@ -19,7 +19,7 @@
   "author": "Michael Fischer",
   "license": "ISC",
   "dependencies": {
-    "robinhood": "^1.6.5",
-    "yargs": "^16.1.0"
+    "robinhood": "^1.7.0",
+    "yargs": "^16.2.0"
   }
 }
