@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "Stock trader bot",
   "bin": {
-    "trader_login": "./login.js"
+    "trader_login": "./login.js",
+    "trader_start": "./index.js"
   },
   "main": "index.js",
   "scripts": {
@@ -19,7 +20,9 @@
   "author": "Michael Fischer",
   "license": "ISC",
   "dependencies": {
+    "luxon": "^1.25.0",
     "robinhood": "^1.7.0",
+    "twitter-v2": "^1.0.0",
     "yargs": "^16.2.0"
   }
 }

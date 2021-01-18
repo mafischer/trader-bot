@@ -1,5 +1,10 @@
-const credentials = require("./credentials");
-const Robinhood = require('robinhood')(credentials, function(){
+#!/usr/bin/env node
+const credentials = require('./credentials');
+const Twitter = require('twitter-v2');
+const { DateTime } = require('luxon');
+
+// robinhood stuff
+const Robinhood = require('robinhood')(credentials.robinhood, function(){
 
     Robinhood.quote_data('TSLA', function(error, response, body) {
         if (error) {
@@ -13,22 +18,24 @@ const Robinhood = require('robinhood')(credentials, function(){
         if(err){
             console.error(err);
         }else{
-            console.log("investment_profile");
+            console.log('investment_profile');
             console.log(body);
-                //    { annual_income: '25000_39999',
-                //      investment_experience: 'no_investment_exp',
-                //      updated_at: '2015-06-24T17:14:53.593009Z',
-                //      risk_tolerance: 'low_risk_tolerance',
-                //      total_net_worth: '0_24999',
-                //      liquidity_needs: 'very_important_liq_need',
-                //      investment_objective: 'income_invest_obj',
-                //      source_of_funds: 'savings_personal_income',
-                //      user: 'https://api.robinhood.com/user/',
-                //      suitability_verified: true,
-                //      tax_bracket: '',
-                //      time_horizon: 'short_time_horizon',
-                //      liquid_net_worth: '0_24999' }
-
         }
     })
+});
+
+// twitter stuff
+const client = new Twitter(credentials.twitter);
+
+// TODO: setup twitter data strategies for trading.
+const id = "1332370385921306631";
+
+// pull tweets from user since "start_time"
+client.get(`users/${id}/tweets`, { 
+    start_time: `${DateTime.utc().minus({days: 1}).toISO()}`,
+    exclude: "retweets,replies"
+}).then(data => {
+    console.log(data);
+}).catch(err => {
+    console.log(err);
 });

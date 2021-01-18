@@ -4,11 +4,24 @@ A nodejs script using tensor flow for automating trades on the robinhood broker 
 ## Getting Started
 
 ### Pre Requisite
-- checkout my fork of [robinhood-node](https://github.com/mafischer/robinhood-node.git) onto local computer `git clone git@github.com:mafischer/robinhood-node.git`
-- install robinhood-node dependencies `cd robinhood-node && npm ci`
-- link robinhood-node `npm link`
+- create a twitter developer account
+- add `export PATH=~/.npm/bin:$PATH` to your `~/.bash_profile`
 
 ### Setting Up Trader Bot
 - `npm ci`
+- run `npm link` for cli functionality (`trader_login`,`trader_start`)
 - run `trader_login` or `node login.js` to generate a token. It will prompt you for your robinhood username and password and sms passcode.
+- copy your twitter dev credentials into the `credentials.json` file:
+```json
+{
+  "robinhood": {
+    "token": "******"
+  },
+  "twitter": {
+    "bearer_token": "******",
+    "consumer_key": "******",
+    "consumer_secret": "******"
+  }
+}
+```
 - run the traderbot `node index.js`
