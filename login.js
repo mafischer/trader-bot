@@ -2,11 +2,6 @@
 const readline = require('readline');
 const fs = require('fs');
 
-// TODO: run as a loop
-// TODO: create a stategy interface
-// TODO: persist strategies and configs to sqlite db
-// TODO: create an electron ui to monitor, config, review, and etc.
-
 main();
 
 async function main() {

@@ -3,8 +3,7 @@
   "version": "1.0.0",
   "description": "Stock trader bot",
   "bin": {
-    "trader_login": "./login.js",
-    "trader_start": "./index.js"
+    "trader_login": "./login.js"
   },
   "main": "index.js",
   "scripts": {
@@ -22,6 +21,8 @@
   "dependencies": {
     "luxon": "^1.25.0",
     "robinhood": "^1.7.0",
+    "sqlite": "^4.0.19",
+    "sqlite3": "^5.0.1",
     "twitter-v2": "^1.0.1",
     "yargs": "^16.2.0"
   }
