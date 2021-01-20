@@ -52,9 +52,22 @@ async function createSQLiteDb() {
             );
         `);
 
-        // await twitterDb.run(`
-        //     INSERT INTO "tweets" ("id", "author_id", "created_at", "text") VALUES ('1351263271261769728', '1332370385921306631', '2021-01-18T20:20:43.000Z', 'Since markets are closed today, I wanted to share a video @FeeFiFoFreedom made that walks through the strategy. If you ever tried to explain reverse split arbitrage to a friend and they''re all "huh?", this video is for them. https://t.co/AS7H2RX8xK');
-        // `);
+        await twitterDb.run(`
+            CREATE TABLE "following" (
+                "id"	TEXT NOT NULL,
+                "name"	TEXT NOT NULL,
+                "username"	TEXT NOT NULL,
+                PRIMARY KEY("id")
+            );
+        `);
+
+        await twitterDb.run(`
+            INSERT INTO "following"
+            VALUES
+            ('44196397', 'Elon Musk', 'elonmusk'),
+            ('1332370385921306631', 'Reverse Split Arbitrage', 'ReverseSplitArb'),
+            ('898021206967951360', 'Tesla Daily', 'TeslaPodcast');
+        `);
 
         await twitterDb.close();
     }

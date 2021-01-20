@@ -16,8 +16,9 @@ const client = new Twitter(credentials.twitter);
 // start application main function
 main();
 
-// TODO: create a stategy interface
+// TODO: create a stategy interface <-- this!!
 // TODO: create an electron ui to monitor, config, review, and etc.
+// TODO: throw in some error handling
 
 async function main() {
 
@@ -43,7 +44,7 @@ async function main() {
     // load user's elected strategies
     let strategies;
     try {
-        strategies = await db.run("select * from strategies;");
+        strategies = await db.all("select * from strategies;");
     } catch(err) {
         console.log(err)
     }
@@ -60,68 +61,75 @@ async function main() {
 
         paused = false;
 
-        let cache;
+        let following;
         try {
-            cache = await db.get("select * from twitter.tweets where created_at = (select MAX(created_at) from twitter.tweets where author_id = $author_id) and author_id = $author_id limit 1;", {$author_id: '1332370385921306631'});
+            following = await db.all("select * from twitter.following;");
         } catch(err) {
-            console.log(err)
+            console.log(err);
         }
-        console.log(cache);
-        
-        //fetch latest data for strategy
-        const queryParams = {
-            start_time: `${DateTime.utc().minus({ days: 2 }).toISO()}`,
-            exclude: "retweets,replies",
-            'tweet.fields': "id,text,created_at,context_annotations,entities,withheld,public_metrics,geo,author_id"
-        };
-        // set since_id to avoide duplicate data
-        let author = '1332370385921306631';
-        if(cache && cache.id) {
-            queryParams['since_id'] = cache.id;
-            author = cache.author_id;
-        }
-        const tweets = await client.get(`users/${author}/tweets`, queryParams);
 
-        // add new tweets to db
-        if(tweets.hasOwnProperty('data') && Array.isArray(tweets.data)) {
-
-            tweets.data.forEach(async tweet => {
+        following.forEach(async tweeter => {
+            let cache;
+            try {
+                cache = await db.get("select * from twitter.tweets where created_at = (select MAX(created_at) from twitter.tweets where author_id = $author_id) and author_id = $author_id limit 1;", {$author_id: tweeter.id});
+            } catch(err) {
+                console.log(err)
+            }
+            console.log(cache);
             
-                console.log(tweet);
-    
-                await db.run(`
-                    insert into twitter.tweets
-                    (id, author_id, created_at, text, entities, public_metrics, context_annotations, withheld, geo)
-                    values
-                    ($id, $author_id, $created_at, $text, $entities, $public_metrics, $context_annotations, $withheld, $geo);
-                `, {
-                    $id: tweet.id,
-                    $author_id: tweet.author_id,
-                    $created_at: tweet.created_at,
-                    $text: tweet.text,
-                    $entities: JSON.stringify(tweet.entities),
-                    $public_metrics: JSON.stringify(tweet.public_metrics),
-                    $context_annotations: JSON.stringify(tweet.context_annotations),
-                    $withheld: JSON.stringify(tweet.withheld),
-                    $geo: JSON.stringify(tweet.geo)
+            //fetch latest data for strategy
+            const queryParams = {
+                start_time: `${DateTime.utc().minus({ days: 7 }).toISO()}`,
+                exclude: "retweets,replies",
+                'tweet.fields': "id,text,created_at,context_annotations,entities,withheld,public_metrics,geo,author_id"
+            };
+            // set since_id to avoide duplicate data
+            if(cache && cache.id) {
+                queryParams['since_id'] = cache.id;
+            }
+            const tweets = await client.get(`users/${tweeter.id}/tweets`, queryParams);
+
+            // add new tweets to db
+            if(tweets.hasOwnProperty('data') && Array.isArray(tweets.data)) {
+
+                tweets.data.forEach(async tweet => {
+                
+                    console.log(tweet);
+        
+                    await db.run(`
+                        insert into twitter.tweets
+                        (id, author_id, created_at, text, entities, public_metrics, context_annotations, withheld, geo)
+                        values
+                        ($id, $author_id, $created_at, $text, $entities, $public_metrics, $context_annotations, $withheld, $geo);
+                    `, {
+                        $id: tweet.id,
+                        $author_id: tweet.author_id,
+                        $created_at: tweet.created_at,
+                        $text: tweet.text,
+                        $entities: JSON.stringify(tweet.entities),
+                        $public_metrics: JSON.stringify(tweet.public_metrics),
+                        $context_annotations: JSON.stringify(tweet.context_annotations),
+                        $withheld: JSON.stringify(tweet.withheld),
+                        $geo: JSON.stringify(tweet.geo)
+                    });
+        
+                    // look for stock ticker symbol
+                    let tickers;
+                    if(typeof tweet.text === 'string') {
+                        tickers = tweet.text.matchAll(ticker);
+                    }
+                    for (let stock in tickers) {
+                        console.log(stock);
+                        // quote stock
+
+                        // execute trade (ask for permission from owner if low probability score)
+
+                        // add trade to watch
+                    }
                 });
-    
-                // look for stock ticker symbol
-                let tickers;
-                if(typeof tweet.text === 'string') {
-                    tickers = tweet.text.matchAll(ticker);
-                }
-                for (let stock in tickers) {
-                    console.log(stock);
-                    // quote stock
 
-                    // execute trade (ask for permission from owner if low probability score)
-
-                    // add trade to watch
-                }
-            });
-
-        }
+            }
+        });
 
         // TODO: clean up old data
 
