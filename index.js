@@ -18,15 +18,48 @@ const sleep = promisify(setTimeout);
 // create a twitter client
 const client = new Twitter(credentials.twitter);
 
+// declare db variable globally
+let db;
+
+// exit boolean determines whether we should abort at the end of a loop.
+// paused boolean indicates whether the loop is executing or sleeping.
+let exit = false, paused = true;
+
 // start application main function
 main();
+
+// press ctrl+c to exit trader-bot
+if (process.platform === "win32") {
+    var rl = require("readline").createInterface({
+        input: process.stdin,
+        output: process.stdout
+    });
+
+    rl.on("SIGINT", function () {
+        process.emit("SIGINT");
+    });
+}
+process.on('SIGINT', async function() {
+    console.log("\nCaught interrupt signal");
+    exit = true;
+    if(paused) {
+        await gracefulShutdown(db);
+    }
+});
 
 // keep tabs on the process
 const watch = setInterval(() => {
     console.log(`\n${DateTime.local().toISO()} - process stats:\ncpu:\n${JSON.stringify(process.cpuUsage())}\nmemory:\n${JSON.stringify(process.memoryUsage())}`)
-}, 60000);
+}, 600000);
 
 // TODO: create a stategy interface <-- this!!
+    /**
+     * name
+     * description
+     */
+// strategy must inherity base strategy class
+// Object.getPrototypeOf(CustomStrategy.constructor) === Strategy;
+
 // TODO: create an electron ui to monitor, config, review, and etc.
 // TODO: throw in some error handling
 
@@ -34,10 +67,6 @@ const watch = setInterval(() => {
 async function main() {
 
     console.log('initializing..\n');
-
-    // exit boolean determines whether we should abort at the end of a loop.
-    // paused boolean indicates whether the loop is executing or sleeping.
-    let exit = false, paused = true;
 
     // wait for broker initialization
 
@@ -68,18 +97,9 @@ async function main() {
     * fidelity
     **/
 
-    // press ctrl+c to exit trader-bot
-    process.on('SIGINT', async function() {
-        console.log("\nCaught interrupt signal");
-        exit = true;
-        if(paused) {
-            await gracefulShutdown(db);
-        }
-    });
-
     // open the sqlite database
     // no try catch because we want app to fail if this isn't working.
-    const db = await open({
+    db = await open({
         filename: './trader.db',
         driver: sqlite3.cached.Database
     });
@@ -219,11 +239,11 @@ async function main() {
         paused = true;
         await sleep(10000);
     }
-    await gracefulShutdown(db);
+    await gracefulShutdown();
 };
 
 // graceful shutdown
-async function gracefulShutdown(db){
+async function gracefulShutdown(){
     console.log('shuttingDown');
     clearInterval(watch);
     await db.close();
