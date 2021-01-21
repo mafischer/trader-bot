@@ -6,6 +6,11 @@ const sqlite3 = require('sqlite3');
 const { open } = require('sqlite');
 const { promisify } = require('util');
 const path = require('path');
+const { robinhood } = require('./brokers');
+const { rejects } = require('assert');
+const { resolve } = require('path');
+const { eachSeries, each } = require('async');
+const fs = require('fs');
 
 // make setTimeout async
 const sleep = promisify(setTimeout);
@@ -16,15 +21,52 @@ const client = new Twitter(credentials.twitter);
 // start application main function
 main();
 
+// keep tabs on the process
+const watch = setInterval(() => {
+    console.log(`\n${DateTime.local().toISO()} - process stats:\ncpu:\n${JSON.stringify(process.cpuUsage())}\nmemory:\n${JSON.stringify(process.memoryUsage())}`)
+}, 60000);
+
 // TODO: create a stategy interface <-- this!!
 // TODO: create an electron ui to monitor, config, review, and etc.
 // TODO: throw in some error handling
 
+
 async function main() {
+
+    console.log('initializing..\n');
 
     // exit boolean determines whether we should abort at the end of a loop.
     // paused boolean indicates whether the loop is executing or sleeping.
     let exit = false, paused = true;
+
+    // wait for broker initialization
+
+    /**
+    * robinhood
+    **/
+
+    // no try catch because we want app to fail if this isn't working.
+    const rh = await robinhood;
+
+    // get investment_profile
+    await new Promise((resolve, reject) => {
+        rh.investment_profile(function (err, response, body) {
+            if (err) {
+                return reject(err);
+            } else {
+                console.log('robinhood investment profile downloaded successfully.\n');
+                resolve(body);
+            }
+        }
+    )});
+
+    /**
+    * webull
+    **/
+
+    /**
+    * fidelity
+    **/
 
     // press ctrl+c to exit trader-bot
     process.on('SIGINT', async function() {
@@ -36,26 +78,25 @@ async function main() {
     });
 
     // open the sqlite database
+    // no try catch because we want app to fail if this isn't working.
     const db = await open({
         filename: './trader.db',
         driver: sqlite3.cached.Database
     });
 
     // load user's elected strategies
-    let strategies;
-    try {
-        strategies = await db.all("select * from strategies;");
-    } catch(err) {
-        console.log(err)
-    }
-    // TODO: run trading logic based on strategy
-    console.log(strategies);
+    // no try catch because we want app to fail if this isn't working.
+    const strategies = await db.all("select * from strategies;");
+    
+    // TODO: run trading logic based on elected strategies
+    console.log(`Executing strategies:\n${JSON.stringify(strategies)}\n`);
 
     // attach secondary databases relevant to strategy
+    // no try catch because we want app to fail if this isn't working.
     await db.run(`ATTACH DATABASE '${path.resolve(__dirname,'twitter.db')}' AS twitter;`);
 
     // stock ticker regex
-    const ticker = /\$([A-Z]{1,4})/ig;
+    const ticker = /\$(?<ticker>[A-Z]{1,4})/ig;
 
     while(!exit) {
 
@@ -68,18 +109,18 @@ async function main() {
             console.log(err);
         }
 
-        following.forEach(async tweeter => {
+        await eachSeries(following, async tweeter => {
+
             let cache;
             try {
                 cache = await db.get("select * from twitter.tweets where created_at = (select MAX(created_at) from twitter.tweets where author_id = $author_id) and author_id = $author_id limit 1;", {$author_id: tweeter.id});
             } catch(err) {
                 console.log(err)
             }
-            console.log(cache);
             
             //fetch latest data for strategy
             const queryParams = {
-                start_time: `${DateTime.utc().minus({ days: 7 }).toISO()}`,
+                start_time: `${DateTime.utc().minus({ days: 10 }).toISO()}`,
                 exclude: "retweets,replies",
                 'tweet.fields': "id,text,created_at,context_annotations,entities,withheld,public_metrics,geo,author_id"
             };
@@ -87,48 +128,84 @@ async function main() {
             if(cache && cache.id) {
                 queryParams['since_id'] = cache.id;
             }
-            const tweets = await client.get(`users/${tweeter.id}/tweets`, queryParams);
+            let tweets;
+            try {
+                tweets = await client.get(`users/${tweeter.id}/tweets`, queryParams);
+            } catch (err) {
+                console.log(err);
+            }
 
-            // add new tweets to db
+            // analyze new tweets and store in db
             if(tweets.hasOwnProperty('data') && Array.isArray(tweets.data)) {
 
-                tweets.data.forEach(async tweet => {
-                
-                    console.log(tweet);
+                if(tweets.meta.result_count > 0 ) {
+                    console.log(`${tweeter.name} has tweeted since we last checked!!\n`);
+                } else {
+                    console.log(`No new tweets from ${tweeter.name} :(\n`);
+                }
+
+                await eachSeries(tweets.data, async tweet => {
+                    
+                    console.log(`${tweet.created_at}:\n${tweet.text}\n`);
+                    
+                    try {
+                        await db.run(`
+                            insert into twitter.tweets
+                            (id, author_id, created_at, text, entities, public_metrics, context_annotations, withheld, geo)
+                            values
+                            ($id, $author_id, $created_at, $text, $entities, $public_metrics, $context_annotations, $withheld, $geo);
+                        `, {
+                            $id: tweet.id,
+                            $author_id: tweet.author_id,
+                            $created_at: tweet.created_at,
+                            $text: tweet.text,
+                            $entities: JSON.stringify(tweet.entities),
+                            $public_metrics: JSON.stringify(tweet.public_metrics),
+                            $context_annotations: JSON.stringify(tweet.context_annotations),
+                            $withheld: JSON.stringify(tweet.withheld),
+                            $geo: JSON.stringify(tweet.geo)
+                        });
+                    } catch (err) {
+                        console.log(err);
+                    }
         
-                    await db.run(`
-                        insert into twitter.tweets
-                        (id, author_id, created_at, text, entities, public_metrics, context_annotations, withheld, geo)
-                        values
-                        ($id, $author_id, $created_at, $text, $entities, $public_metrics, $context_annotations, $withheld, $geo);
-                    `, {
-                        $id: tweet.id,
-                        $author_id: tweet.author_id,
-                        $created_at: tweet.created_at,
-                        $text: tweet.text,
-                        $entities: JSON.stringify(tweet.entities),
-                        $public_metrics: JSON.stringify(tweet.public_metrics),
-                        $context_annotations: JSON.stringify(tweet.context_annotations),
-                        $withheld: JSON.stringify(tweet.withheld),
-                        $geo: JSON.stringify(tweet.geo)
-                    });
-        
-                    // look for stock ticker symbol
-                    let tickers;
+                    // look for stock ticker symbols in tweet
                     if(typeof tweet.text === 'string') {
-                        tickers = tweet.text.matchAll(ticker);
-                    }
-                    for (let stock in tickers) {
-                        console.log(stock);
-                        // quote stock
+                        let match;
+                        do {
+                            match = ticker.exec(tweet.text);
+                            if(match) {
+                                const stock = match.groups.ticker;
+                                console.log(`${tweeter.name} tweeted about ticker symbol ${stock} in their tweet!!`);
 
-                        // execute trade (ask for permission from owner if low probability score)
+                                // quote stock
+                                try {
+                                    await new Promise((resolve, reject) => {
+                                        rh.quote_data(stock, function (error, response, body) {
+                                            if (error) {
+                                                reject(err);
+                                            } else {
+                                                console.log(`\nquote for ${stock}:\n${JSON.stringify(body)}\n`);
+                                                resolve(body);
+                                            }
+                                        });
+                                    });
+                                } catch (err) {
+                                    console.log(err);
+                                }
 
-                        // add trade to watch
+                                // execute trade (ask for permission from owner if low probability score)
+
+                                // add trade to watch
+
+                            }
+                        } while((match = ticker.exec(tweet.text)) !== null);
                     }
+
                 });
 
             }
+
         });
 
         // TODO: clean up old data
@@ -148,27 +225,7 @@ async function main() {
 // graceful shutdown
 async function gracefulShutdown(db){
     console.log('shuttingDown');
+    clearInterval(watch);
     await db.close();
     process.exit();
 }
-
-// robinhood stuff
-const Robinhood = require('robinhood')(credentials.robinhood, function () {
-
-    Robinhood.quote_data('TSLA', function (error, response, body) {
-        if (error) {
-            console.error(error);
-            process.exit(1);
-        }
-        console.log(body);
-    });
-
-    Robinhood.investment_profile(function (err, response, body) {
-        if (err) {
-            console.error(err);
-        } else {
-            console.log('investment_profile');
-            console.log(body);
-        }
-    })
-});

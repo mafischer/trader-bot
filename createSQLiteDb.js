@@ -9,7 +9,7 @@ async function createSQLiteDb() {
     console.log('starting db initialization');
 
     if(!fs.existsSync('./trader.db')) {
-        // create trader table
+        // create trader database
         const traderDb = await open({
             filename: './trader.db',
             driver: sqlite3.cached.Database
@@ -28,6 +28,8 @@ async function createSQLiteDb() {
         `);
 
         await traderDb.close();
+
+        console.log('sucessfully initialized trader database');
     }
 
     if(!fs.existsSync('./twitter.db')) {
@@ -61,6 +63,7 @@ async function createSQLiteDb() {
             );
         `);
 
+        // TODO: remove this data insert after user has ability to configure this
         await twitterDb.run(`
             INSERT INTO "following"
             VALUES
@@ -70,7 +73,9 @@ async function createSQLiteDb() {
         `);
 
         await twitterDb.close();
+
+        console.log('sucessfully initialized twitter database');
     }
 
-    console.log('done initializing db');
+    console.log('All SQLite database files exist, if you are having problems, try "rm *.db && npm run postinstall".')
 }
