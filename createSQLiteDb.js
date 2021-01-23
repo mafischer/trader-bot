@@ -14,6 +14,14 @@ async function createSQLiteDb() {
             filename: './trader.db',
             driver: sqlite3.cached.Database
         });
+        // create credentials table
+        await traderDb.run(`
+            CREATE TABLE "credentials" (
+                "id"	INTEGER NOT NULL CHECK(id=1),
+                "credentials"	TEXT NOT NULL,
+                PRIMARY KEY("id" AUTOINCREMENT)
+            );
+        `);
         // create strategies table
         await traderDb.run(`
             CREATE TABLE "strategies" (

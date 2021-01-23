@@ -1,22 +1,16 @@
-#!/usr/bin/env node
-const credentials = require('./credentials');
-const Twitter = require('twitter-v2');
 const { DateTime } = require('luxon');
 const sqlite3 = require('sqlite3');
 const { open } = require('sqlite');
 const { promisify } = require('util');
 const path = require('path');
-const { robinhood } = require('./brokers');
-const { rejects } = require('assert');
-const { resolve } = require('path');
 const { eachSeries, each } = require('async');
 const fs = require('fs');
+const home = __dirname;
+const api = import('./api/index.mjs');
+const brokers = import('./brokers/index.mjs');
 
 // make setTimeout async
 const sleep = promisify(setTimeout);
-
-// create a twitter client
-const client = new Twitter(credentials.twitter);
 
 // declare db variable globally
 let db;
@@ -52,10 +46,11 @@ const watch = setInterval(() => {
     console.log(`\n${DateTime.local().toISO()} - process stats:\ncpu:\n${JSON.stringify(process.cpuUsage())}\nmemory:\n${JSON.stringify(process.memoryUsage())}`)
 }, 600000);
 
-// TODO: create a stategy interface <-- this!!
+// TODO: create a stategy base class / interface <-- this!!
     /**
-     * name
-     * description
+     * Name
+     * Description
+     * project_directory
      */
 // strategy must inherity base strategy class
 // Object.getPrototypeOf(CustomStrategy.constructor) === Strategy;
@@ -68,18 +63,22 @@ async function main() {
 
     console.log('initializing..\n');
 
+    // wait for api initialization
+    const { twitter } = await api;
+
     // wait for broker initialization
 
     /**
     * robinhood
     **/
+    const { robinhood } = await brokers;
 
     // no try catch because we want app to fail if this isn't working.
-    const rh = await robinhood;
+    // const robinhood.= await robinhood;
 
     // get investment_profile
     await new Promise((resolve, reject) => {
-        rh.investment_profile(function (err, response, body) {
+        robinhood.investment_profile(function (err, response, body) {
             if (err) {
                 return reject(err);
             } else {
@@ -150,7 +149,7 @@ async function main() {
             }
             let tweets;
             try {
-                tweets = await client.get(`users/${tweeter.id}/tweets`, queryParams);
+                tweets = await twitter.get(`users/${tweeter.id}/tweets`, queryParams);
             } catch (err) {
                 console.log(err);
             }
@@ -201,7 +200,7 @@ async function main() {
                                 // quote stock
                                 try {
                                     await new Promise((resolve, reject) => {
-                                        rh.quote_data(stock, function (error, response, body) {
+                                        robinhood.quote_data(stock, function (error, response, body) {
                                             if (error) {
                                                 reject(err);
                                             } else {
@@ -240,12 +239,14 @@ async function main() {
         await sleep(10000);
     }
     await gracefulShutdown();
-};
+}
 
 // graceful shutdown
 async function gracefulShutdown(){
     console.log('shuttingDown');
     clearInterval(watch);
-    await db.close();
+    if(db) {
+        await db.close();
+    }
     process.exit();
 }

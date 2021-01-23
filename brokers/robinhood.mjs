@@ -1,10 +1,10 @@
 // robinhood stuff
-const Robinhood = require('robinhood');
-const credentials = require('../credentials');
+import Robinhood from 'robinhood';
+import credentials from '../login.mjs';
 
 let rh, initialized = false;
 
-module.exports = new Promise((resolve, reject) => {
+export default await new Promise((resolve, reject) => {
 
     if(initialized) {
         return resolve(rh);
