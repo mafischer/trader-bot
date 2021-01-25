@@ -5,7 +5,7 @@ class ReverseSplitArbitrage extends Strategy {
         this.super(config);
 
         // create && attach new db
-
+        
         // start the strategy
         this.main();
     }
