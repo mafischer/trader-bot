@@ -27,7 +27,7 @@
     "robinhood": "^1.7.0",
     "sqlite": "^4.0.19",
     "sqlite3": "^5.0.1",
-    "twitter-v2": "^1.0.1",
+    "twitter-v2": "^1.0.2",
     "yargs": "^16.2.0"
   }
 }
