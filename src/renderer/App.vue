@@ -7,7 +7,7 @@
 <script>
   export default {
     name: 'trader-bot'
-  }
+  };
 </script>
 
 <style>
