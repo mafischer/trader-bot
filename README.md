@@ -24,22 +24,44 @@ This software is licensed under the ISC license. See [LICENSE](LICENSE) for full
   - **webull**: *coming next, soon..*
   - **more to come**
 
-### Machine Setup
+### Dev Environment Setup
 #### Windows
 For easy setup, you may use chocolatey as outlined below. Otherwise, if you know what you are doing, feel free to install the below dependencies however you see fit.
 - install [chocloatey](https://chocolatey.org/install)
-- install [NodeJS](https://nodejs.org/) `choco install nodejs-lts`
-- run `npm bin` in your home directory, add the output directory to your user path.
-- install [SQLite](https://www.sqlite.org/index.html) `choco install sqlite`
+``` powershell
+# install chocloatey - https://chocolatey.org/install
+Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+# install NodeJS - https://nodejs.org/
+choco install nodejs-lts
+# install SQLite
+choco install sqlite
+```
 #### Mac
 For easy setup, you may use brew as outlined below. Otherwise, if you know what you are doing, feel free to install the below dependencies however you see fit.
-- install [brew](https://brew.sh/)
-- install [NodeJS](https://nodejs.org/) `brew install node`
-- add `export PATH="$(npm bin):$PATH"` to your `~/.bash_profile`
-- install [SQLite](https://www.sqlite.org/index.html) `brew install sqlite`
+``` bash
+# install brew - https://brew.sh/
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+# install NodeJS -https://nodejs.org/
+brew install node
+# install SQLite https://www.sqlite.org/index.html
+brew install sqlite
+```
 #### Other
 It is presumed that you know what you are doing.
 - Install node and sqlite
+#### All
+``` bash
+# install dependencies
+npm install
+# serve with hot reload at localhost:9080
+npm run dev
+# build electron application for production
+npm run build
+# run unit & end-to-end tests
+npm test
+# lint all JS/Vue component files in `src/`
+npm run lint
+```
 
 ### Setting Up Trader Bot
 - download [trader-bot](https://github.com/mafischer/trader-bot) source code
@@ -70,3 +92,7 @@ Become a patron by clicking below:
 Send a one-time donation via paypal:
 
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.me/michaelmab88/5)
+
+---
+
+This project was generated with [electron-vue](https://github.com/SimulatedGREG/electron-vue)@[45a3e22](https://github.com/SimulatedGREG/electron-vue/tree/45a3e224e7bb8fc71909021ccfdcfec0f461f634) using [vue-cli](https://github.com/vuejs/vue-cli). Documentation about the original structure can be found [here](https://simulatedgreg.gitbooks.io/electron-vue/content/index.html).

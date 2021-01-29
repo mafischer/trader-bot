@@ -4,3 +4,11 @@ credentials.json
 .DS_Store
 *.db
 *.dump
+dist/electron/*
+dist/web/*
+build/*
+!build/icons
+coverage
+npm-debug.log
+npm-debug.log.*
+!.gitkeep
