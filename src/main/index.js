@@ -1,6 +1,7 @@
 'use strict';
 
 import { app, BrowserWindow } from 'electron';
+import { name, version, author } from '../../package.json';
 
 /**
  * Set `__static` path to static files in production
@@ -14,6 +15,15 @@ let mainWindow;
 const winURL = process.env.NODE_ENV === 'development'
   ? `http://localhost:9080`
   : `file://${__dirname}/index.html`;
+
+// set about window
+app.setAboutPanelOptions({
+  applicationName: name,
+  applicationVersion: version,
+  version,
+  authors: [author],
+  iconPath: '../../build/256x256.png'
+});
 
 function createWindow () {
   /**
