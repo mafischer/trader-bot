@@ -7,7 +7,7 @@ A stock trading bot that can automate trades based on elected trade strategies. 
 
 ## Warnings
 - This software should be considered experimental!
-- You are running this software with access to your stock broker(s). **THERE IS POTENTIAL FOR FINANCIAL LOSS!!**
+- You are giving this experimental software access to your stock broker(s). **THERE IS POTENTIAL FOR FINANCIAL LOSS!!**
 - Your credentials will be encrypted and stored on your local file system. At no point will this software store your credentials anywhere accept in the machine where you run it.
 - Other than your credentials, all data is stored unencrypted in a SQLite db on your machine.
 
