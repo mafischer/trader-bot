@@ -1,15 +1,62 @@
 {
   "name": "trader-bot",
   "version": "1.0.0",
+  "private": true,
   "description": "Stock trader bot",
-  "bin": {
-    "trader_login": "./login.js"
+  "author": {
+    "name": "Michael Fischer"
   },
-  "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "postinstall": "node ./createSQLiteDb.js"
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "test:unit": "vue-cli-service test:unit",
+    "lint": "vue-cli-service lint",
+    "electron:build": "vue-cli-service electron:build",
+    "electron:serve": "vue-cli-service electron:serve",
+    "postinstall": "node ./createSQLiteDb.js && electron-builder install-app-deps",
+    "postuninstall": "electron-builder install-app-deps"
+  },
+  "main": "background.js",
+  "dependencies": {
+    "async": "^3.2.0",
+    "core-js": "^3.6.5",
+    "cryptr": "^6.0.2",
+    "luxon": "^1.25.0",
+    "robinhood": "^1.7.0",
+    "sqlite": "^4.0.19",
+    "sqlite3": "5.0.0",
+    "twitter-v2": "^1.0.2",
+    "vue": "^2.6.11",
+    "vue-router": "^3.2.0",
+    "vuex": "^3.4.0"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "~4.5.0",
+    "@vue/cli-plugin-eslint": "~4.5.0",
+    "@vue/cli-plugin-router": "~4.5.0",
+    "@vue/cli-plugin-unit-mocha": "~4.5.0",
+    "@vue/cli-plugin-vuex": "~4.5.0",
+    "@vue/cli-service": "~4.5.0",
+    "@vue/eslint-config-airbnb": "^5.0.2",
+    "@vue/test-utils": "^1.0.3",
+    "babel-eslint": "^10.1.0",
+    "chai": "^4.1.2",
+    "chai-as-promised": "^7.1.1",
+    "electron": "^9.0.0",
+    "electron-devtools-installer": "^3.1.0",
+    "eslint": "^6.7.2",
+    "eslint-plugin-import": "^2.20.2",
+    "eslint-plugin-vue": "^6.2.2",
+    "lint-staged": "^9.5.0",
+    "node-sass": "^4.12.0",
+    "sass-loader": "^8.0.2",
+    "spectron": "11.0.0",
+    "vue-cli-plugin-electron-builder": "~2.0.0-rc.5",
+    "vue-template-compiler": "^2.6.11"
+  },
+  "_id": "trader-bot@1.0.0",
+  "gitHooks": {
+    "pre-commit": "lint-staged"
   },
   "keywords": [
     "bot",
@@ -18,16 +65,12 @@
     "nasdaq",
     "robinhood"
   ],
-  "author": "Michael Fischer",
   "license": "ISC",
-  "dependencies": {
-    "async": "^3.2.0",
-    "cryptr": "^6.0.2",
-    "luxon": "^1.25.0",
-    "robinhood": "^1.7.0",
-    "sqlite": "^4.0.19",
-    "sqlite3": "^5.0.1",
-    "twitter-v2": "^1.0.2",
-    "yargs": "^16.2.0"
-  }
+  "lint-staged": {
+    "*.{js,jsx,vue}": [
+      "vue-cli-service lint",
+      "git add"
+    ]
+  },
+  "readme": "ERROR: No README data found!"
 }

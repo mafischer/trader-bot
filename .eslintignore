@@ -1,0 +1,3 @@
+dist_electron
+*.spec.js
+strategies/*
