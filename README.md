@@ -1,5 +1,8 @@
 # Trader Bot
-A stock trading bot that can automate trades based on elected trade strategies. Trade strategies can be plugins that are provided out of the box, created by the end user, or provided by the community.
+A stock trading bot that can automate trades based on elected trade strategies. Trade strategies are plugins that are provided out of the box, created by the end user, or provided by the community.
+
+## TL;DR
+Install from [here](#Installation) and enjoy!
 
 ## Acknowledgements
 - This bot and the reverse-spit strategy were initially inspired by the work of [@ReverseSplitArb](https://twitter.com/ReverseSplitArb), send some appreciation that way.
@@ -8,15 +11,21 @@ A stock trading bot that can automate trades based on elected trade strategies. 
 ## Warnings
 - This software should be considered experimental!
 - You are giving this experimental software access to your stock broker(s). **THERE IS POTENTIAL FOR FINANCIAL LOSS!!**
-- Your credentials will be encrypted and stored on your local file system. At no point will this software store your credentials anywhere accept in the machine where you run it.
-- Other than your credentials, all data is stored unencrypted in a SQLite db on your machine.
+- All data is stored on your local file system in SQLite databases.
+- Your credentials will be encrypted and stored in SQLite.
+- Anonymous usage statistics may be sent over the network if you chose to allow it.
 
 ## License
 This software is licensed under the ISC license. See [LICENSE](LICENSE) for full details.
 
-## Getting Started
+## Usage
 
-### Pre Requisites
+### Installation
+- Download the installer from [TO DO](#)
+
+### Setup
+
+#### Pre Requisites
 - For access to twitter data, [apply](https://developer.twitter.com/en/apply-for-access) for a twitter developer account
 - create an account with a supported broker (support further development by using below links to open an account):
   - **robinhood**: https://join.robinhood.com/michaef30
@@ -24,10 +33,32 @@ This software is licensed under the ISC license. See [LICENSE](LICENSE) for full
   - **webull**: *coming next, soon..*
   - **more to come**
 
-### Dev Environment Setup
+#### First Run
+- Start the application.
+- You will be prompted for your broker and twitter developer credentials.
+- You will be prompted for a password to encrypt and decrypt your credentials.
+- Elect one or more trading strategies.
+- The bot will now make trades according to your elected strategitesl
+
+#### Subsequent Runs
+- Start the application.
+- You will be prompted for a password to encrypt and decrypt your credentials.
+- All of your settings are persited in a local database. The application will run as previously configured.
+- Leave running, Trader Bot must be running in order to make trades.
+
+## Development
+
+### Tech Stack & Docs
+- [NodeJS](https://nodejs.org/en/docs/)
+- [Electron](https://www.electronjs.org/)
+- [Vue](https://vuejs.org/)
+- [Vue CLI](https://cli.vuejs.org/)
+- [vue-cli-plugin-electron-builder](https://nklayman.github.io/vue-cli-plugin-electron-builder/)
+- [electron-builder](https://www.electron.build/)
+
+### Environment Setup
 #### Windows
 For easy setup, you may use chocolatey as outlined below. Otherwise, if you know what you are doing, feel free to install the below dependencies however you see fit.
-- install [chocloatey](https://chocolatey.org/install)
 ``` powershell
 # install chocloatey - https://chocolatey.org/install
 Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
@@ -35,6 +66,8 @@ Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManage
 choco install nodejs-lts
 # install SQLite
 choco install sqlite
+# install git
+choco install git
 ```
 #### Mac
 For easy setup, you may use brew as outlined below. Otherwise, if you know what you are doing, feel free to install the below dependencies however you see fit.
@@ -51,20 +84,15 @@ It is presumed that you know what you are doing.
 - Install node and sqlite
 #### All
 ``` bash
+# clone project
+git clone https://github.com/mafischer/trader-bot.git
+# change directory into project
+cd trader-bot
 # install dependencies
 npm ci
-# server application
+# serve application
 npm run electron:serve
 ```
-
-### Setting Up Trader Bot
-- download [trader-bot](https://github.com/mafischer/trader-bot) source code
-- open terminal/cmd window in directory of source code
-- Install the application by running `npm ci`.
-- Start the application by running `npm run start`.
-- You will be prompted for your broker and twitter developer credentials.
-- You will be prompted for a password to encrypt and decrypt your credentials.
-- The bot will now make trades according to your elected strategites
 
 ## Further Development
 
