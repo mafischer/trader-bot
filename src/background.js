@@ -2,6 +2,7 @@ import { app, protocol, BrowserWindow } from 'electron';
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib';
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
 import { version, name, author } from '../package.json';
+import initDb from './util/initDb';
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
@@ -13,6 +14,9 @@ app.setAboutPanelOptions({
   copyright: 'Michael Fischer 2021',
   authors: [author],
 });
+
+// get the app root directory
+const home = app.getAppPath('userData');
 
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([
@@ -30,8 +34,11 @@ async function createWindow() {
       // eslint-disable-next-line max-len
       // See nklayman.github.io/vue-cli-plugin-electron-builder/guide/security.html#node-integration for more info
       nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION,
+      enableRemoteModule: true,
     },
   });
+
+  win.maximize();
 
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     // Load the url of the dev server if in development mode
@@ -69,6 +76,11 @@ app.on('ready', async () => {
       await installExtension(VUEJS_DEVTOOLS);
     } catch (e) {
       console.error('Vue Devtools failed to install:', e.toString());
+    }
+    try {
+      await initDb(home);
+    } catch (e) {
+      console.error(e.message);
     }
   }
   createWindow();
