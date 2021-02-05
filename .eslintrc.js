@@ -14,7 +14,11 @@ module.exports = {
     'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
     'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
     'import/no-extraneous-dependencies': ['error', {'devDependencies': true}],
-    'max-len': ["error", { "code": 150 }],
+    'max-len': ["error", {
+      "code": 150,
+      "ignoreTemplateLiterals": true,
+      "ignoreStrings": true
+    }],
   },
   overrides: [
     {
