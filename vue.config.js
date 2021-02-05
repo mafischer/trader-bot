@@ -1,6 +1,10 @@
 // vue.config.js
 module.exports = {
   // options...
+  pages: {
+    index: 'src/main.js',
+    worker: 'src/worker/worker.js',
+  },
   pluginOptions: {
     electronBuilder: {
       externals: ['sqlite3', 'aws-sdk', 'electron-prompt'],

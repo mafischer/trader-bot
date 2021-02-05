@@ -14,5 +14,10 @@ export default {
   components: {
     HelloWorld,
   },
+  created() {
+    if (this.$store.state.credentials === null) {
+      this.$router.push('/login');
+    }
+  },
 };
 </script>

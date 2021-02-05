@@ -20,15 +20,11 @@
       <input v-model="ttoken" type="text" placeholder="Enter Token"/>
       <button type="submit">submit</button>
     </form>
-    <p>
-      state is {{ $store.state }}
-      home is {{ home }}
-    </p>
   </div>
 </template>
 
 <script>
-import { remote } from 'electron';
+import { remote, ipcRenderer } from 'electron';
 import path from 'path';
 import prompt from 'electron-prompt';
 import {
@@ -36,7 +32,7 @@ import {
   robinhood,
   updateCredentials,
   missingCredentials,
-} from '../util/login';
+} from '../lib/login';
 
 const { app, dialog } = remote;
 const home = app.getAppPath('userData');
@@ -89,11 +85,12 @@ export default {
             title: 'Missing Credentials',
           });
         } else {
-          dialog.showMessageBoxSync({
-            type: 'info',
-            message: 'All services successfully logged in!',
-            title: 'Logged In',
-          });
+          // dialog.showMessageBoxSync({
+          //   type: 'info',
+          //   message: 'All services successfully logged in!',
+          //   title: 'Logged In',
+          // });
+          ipcRenderer.send('login', credentials);
           // redirect to home
           this.$router.push({ path: '/' });
         }
