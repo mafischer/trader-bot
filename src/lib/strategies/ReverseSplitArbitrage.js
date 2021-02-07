@@ -1,4 +1,17 @@
-const { Strategy } = require('./Strategy');
+/* eslint-disable consistent-return */
+/* eslint-disable no-cond-assign */
+/* eslint-disable no-prototype-builtins */
+/* eslint-disable no-restricted-globals */
+/* eslint-disable no-undef */
+/* eslint-disable no-loop-func */
+/* eslint-disable no-await-in-loop */
+/* eslint-disable class-methods-use-this */
+/* eslint-disable constructor-super */
+/* eslint-disable no-this-before-super */
+/* eslint-disable no-unused-vars */
+import path from 'path';
+import { eachSeries } from 'async-es';
+import { Strategy } from './Strategy';
 
 class ReverseSplitArbitrage extends Strategy {
   constructor(config) {
