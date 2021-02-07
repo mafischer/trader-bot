@@ -1,14 +1,14 @@
+/* eslint-disable global-require */
 /* eslint-disable no-loop-func */
 /* eslint-disable no-await-in-loop */
-/* eslint-disable global-require */
 import { DateTime } from 'luxon';
 import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
 import { promisify } from 'util';
 import path from 'path';
-import { eachSeries } from 'async';
-import api from './api/index';
-import brokers from './brokers/index';
+import { eachSeries } from 'async-es';
+import api from './api';
+import brokers from './brokers';
 
 // make setTimeout async
 function sleep(time) {
@@ -19,7 +19,7 @@ function sleep(time) {
   });
 }
 
-// declare db variable globally
+// declare db variable in the highest scope
 let db;
 
 // exit boolean determines whether we should abort at the end of a loop.
@@ -27,20 +27,28 @@ let db;
 let exit = false;
 let paused = true;
 let initialized = false;
+const internal = {
+  log: console.log,
+};
 
 // keep tabs on the process
 const watch = setInterval(() => {
-  console.log(`\n${DateTime.local().toISO()} - process stats:\ncpu:\n${JSON.stringify(process.cpuUsage())}\nmemory:\n${JSON.stringify(process.memoryUsage())}`);
+  internal.log(`\n${DateTime.local().toISO()} - process stats:\ncpu:\n${JSON.stringify(process.cpuUsage())}\nmemory:\n${JSON.stringify(process.memoryUsage())}`);
 }, 600000);
 
 // graceful shutdown
 export async function gracefulShutdown() {
-  console.log('shuttingDown');
+  internal.log('preparing for shutddown..');
   clearInterval(watch);
-  if (db) {
-    await db.close();
+  if (db && typeof db.close === 'function') {
+    try {
+      await db.close();
+      internal.log('ready for shutdown.');
+    } catch (err) {
+      internal.log(`forcing shutdown shutdown because of:\n${err.message}`);
+    }
+    internal.quit();
   }
-  process.exit();
 }
 
 // press ctrl+c to exit trader-bot
@@ -55,7 +63,7 @@ if (process.platform === 'win32') {
   });
 }
 process.on('SIGINT', async () => {
-  console.log('\nCaught interrupt signal');
+  internal.log('\nCaught interrupt signal');
   exit = true;
   if (paused) {
     await gracefulShutdown(db);
@@ -79,32 +87,8 @@ export async function main(settings) {
     return;
   }
   initialized = true;
-  console.log('initializing..\n');
-
-  // wait for api initialization
-  const { twitter } = await api(settings.credentials);
-
-  // wait for broker initialization
-
-  /**
-    * robinhood
-    * */
-  const { robinhood } = await brokers(settings.credentials);
-
-  // no try catch because we want app to fail if this isn't working.
-  // const robinhood.= await robinhood;
-
-  // get investment_profile
-  const resp = await promisify(robinhood.investment_profile)();
-  console.log(resp.body);
-
-  /**
-    * webull
-    * */
-
-  /**
-    * fidelity
-    * */
+  internal.log = settings.log;
+  internal.log('initializing..\n');
 
   // open the sqlite database
   // no try catch because we want app to fail if this isn't working.
@@ -113,15 +97,28 @@ export async function main(settings) {
     driver: sqlite3.cached.Database,
   });
 
+  // wait for api initialization
+  const { twitter } = await api(settings.credentials);
+
+  // wait for broker initialization
+  const { robinhood } = await brokers(internal.log, settings.credentials);
+
+  // get accounts
+  const accounts = await robinhood.getAccounts(db);
+  internal.log(`Pull data for ${accounts.length} robinhood accounts`);
+
+  // get order histories
+  const orders = await robinhood.orderHistory(db);
+
+  internal.log(`Transaction history downloaded... found ${orders.length} new records.`);
+
   // load user's elected strategies
-  // no try catch because we want app to fail if this isn't working.
   const strategies = await db.all('select * from strategies;');
 
   // TODO: run trading logic based on elected strategies
-  console.log(`Executing strategies:\n${JSON.stringify(strategies)}\n`);
+  internal.log(`Executing strategies:\n${JSON.stringify(strategies)}\n`);
 
   // attach secondary databases relevant to strategy
-  // no try catch because we want app to fail if this isn't working.
   await db.run(`ATTACH DATABASE '${path.resolve(settings.home, 'twitter.db')}' AS twitter;`);
 
   // stock ticker regex
@@ -134,7 +131,7 @@ export async function main(settings) {
     try {
       following = await db.all('select * from twitter.following;');
     } catch (err) {
-      console.log(err);
+      internal.log(err);
     }
 
     await eachSeries(following, async (tweeter, callback1) => {
@@ -142,7 +139,7 @@ export async function main(settings) {
       try {
         cache = await db.get('select * from twitter.tweets where created_at = (select MAX(created_at) from twitter.tweets where author_id = $author_id) and author_id = $author_id limit 1;', { $author_id: tweeter.id });
       } catch (err) {
-        console.log(err);
+        internal.log(err);
       }
 
       // fetch latest data for strategy
@@ -166,16 +163,16 @@ export async function main(settings) {
           queryParams.pagination_token = response.meta.next_token;
         } while (response.meta.next_token !== undefined);
       } catch (err) {
-        console.log(err);
+        internal.log(err);
       }
 
       // analyze new tweets and store in db
       if (tweets.length > 0) {
-        console.log(`${tweeter.name} has tweeted since we last checked!!\n`);
+        internal.log(`${tweeter.name} has tweeted since we last checked!!\n`);
       }
 
       await eachSeries(tweets, async (tweet, callback2) => {
-        console.log(`${tweet.created_at}:\n${tweet.text}\n`);
+        internal.log(`${tweet.created_at}:\n${tweet.text}\n`);
 
         try {
           await db.run(`
@@ -195,7 +192,7 @@ export async function main(settings) {
             $geo: tweet.geo !== undefined ? JSON.stringify(tweet.geo) : null,
           });
         } catch (err) {
-          console.log(err);
+          internal.log(err);
         }
 
         // look for stock ticker symbols in tweet
@@ -205,14 +202,14 @@ export async function main(settings) {
             match = ticker.exec(tweet.text);
             if (match) {
               const stock = match.groups.ticker;
-              console.log(`${tweeter.name} tweeted about ticker symbol ${stock} in their tweet!!`);
+              internal.log(`${tweeter.name} tweeted about ticker symbol ${stock} in their tweet!!`);
 
               // quote stock
               try {
                 const response = await promisify(robinhood.quote_data)(stock);
-                console.log(`\nquote for ${stock}:\n${JSON.stringify(response.body)}\n`);
+                internal.log(`\nquote for ${stock}:\n${JSON.stringify(response.body)}\n`);
               } catch (err) {
-                console.log(err);
+                internal.log(err);
               }
 
               // execute trade (ask for permission from owner if low probability score)

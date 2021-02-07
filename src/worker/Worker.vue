@@ -8,9 +8,17 @@
 import { ipcRenderer, remote } from 'electron';
 import { main, gracefulShutdown } from '../lib/trader';
 
+function quit() {
+  ipcRenderer.send('quit');
+}
+
 const { app } = remote;
 const internal = {
   home: app.getAppPath('userData'),
+  log: (log) => {
+    ipcRenderer.send('worker-log', log);
+  },
+  quit,
 };
 
 ipcRenderer.on('login', async (event, creds) => {

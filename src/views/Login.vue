@@ -38,6 +38,10 @@ const { app, dialog } = remote;
 const home = app.getAppPath('userData');
 const browserWindow = remote.getCurrentWindow();
 
+ipcRenderer.on('worker-log', async (event, log) => {
+  console.log(log);
+});
+
 // import { openDb } from '../util/db';
 
 export default {
