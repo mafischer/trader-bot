@@ -143,5 +143,5 @@ export default async function initDb(home) {
     console.log('sucessfully initialized twitter database');
   }
 
-  console.log('SQLite database are initialized, if you are having problems, try "rm *.db && npm run postinstall".');
+  console.log('SQLite database are initialized.');
 }

@@ -53,7 +53,6 @@ export default {
       ruser: null,
       rh: null,
       ttoken: null,
-      home,
     };
   },
   updated() {

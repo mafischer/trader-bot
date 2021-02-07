@@ -124,10 +124,10 @@ app.on('ready', async () => {
 
   // create hidden window for main applicaiton code
   const main = await createWindow({
-    // show: false,
+    show: false,
     title: 'hidden window',
-    width: 800,
-    height: 600,
+    // width: 800,
+    // height: 600,
     webPreferences: {
       // Use pluginOptions.nodeIntegration, leave this alone
       // eslint-disable-next-line max-len
