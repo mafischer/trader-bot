@@ -113,10 +113,16 @@ export async function main(settings) {
   internal.log(`Transaction history downloaded... found ${orders.length} new records.`);
 
   // load user's elected strategies
-  const strategies = await db.all('select * from strategies;');
+  const strategies = await db.all(`
+    SELECT s.*, es.updated_at FROM elected_strategies es
+    JOIN strategies s
+    ON es.id = s.id;
+  `);
 
   // TODO: run trading logic based on elected strategies
-  internal.log(`Executing strategies:\n${JSON.stringify(strategies)}\n`);
+  if (strategies.length > 0) {
+    internal.log(`Executing strategies:\n${JSON.stringify(strategies.map((e) => (e.name)))}\n`);
+  }
 
   // attach secondary databases relevant to strategy
   await db.run(`ATTACH DATABASE '${path.resolve(settings.home, 'twitter.db')}' AS twitter;`);
