@@ -28,6 +28,13 @@ export default {
     };
   },
   methods: {
+    async removeStrategy(id) {
+      await db.run(`
+        DELETE FROM elected_strategies
+        WHERE id = $id;
+      `, { $id: id });
+      await this.updateStrategies();
+    },
     async updateStrategies(chosen) {
       const self = this;
       if (Array.isArray(chosen)) {

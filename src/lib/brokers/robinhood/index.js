@@ -5,6 +5,37 @@ import { eachLimit } from 'async-es';
 import Robinhood from 'robinhood';
 import { DateTime } from 'luxon';
 
+async function getPositions(db) {
+  let positions = [];
+  const { body } = await this.p_positions();
+  if (Object.prototype.hasOwnProperty.call(body, 'results')) {
+    positions = body.results;
+    await eachLimit(positions, 10, async (position, positionCb) => {
+      try {
+        const instrument = await this.p_url(position.instrument);
+        position.instrument = instrument.body;
+        await db.run(`
+          INSERT INTO positions (broker, symbol, qty, average_cost, raw)
+          values ($broker, $symbol, $qty, $average_cost, $raw)
+          ON CONFLICT(broker, symbol) DO UPDATE
+          SET qty = $qty, average_cost = $average_cost, raw = $raw;
+        `, {
+          $broker: 'robinhood',
+          $symbol: position.instrument.symbol,
+          $qty: position.quantity,
+          $average_cost: position.average_buy_price,
+          $raw: JSON.stringify(position),
+        });
+        positionCb();
+      } catch (err) {
+        this.log(err);
+        positionCb(err);
+      }
+    });
+  }
+  return positions;
+}
+
 async function getAccounts(db) {
   let accounts = [];
   const { body } = await this.p_accounts();
@@ -189,6 +220,8 @@ export default (log, token) => (
       rh.orderHistory = orderHistory;
       // getAccounts
       rh.getAccounts = getAccounts;
+      // getPositions
+      rh.getPositions = getPositions;
 
       // return robinhood object
       resolve(rh);

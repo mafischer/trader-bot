@@ -107,10 +107,13 @@ export async function main(settings) {
   const accounts = await robinhood.getAccounts(db);
   internal.log(`Pull data for ${accounts.length} robinhood accounts`);
 
-  // get order histories
+  // get order history
   const orders = await robinhood.orderHistory(db);
-
   internal.log(`Transaction history downloaded... found ${orders.length} new records.`);
+
+  // get current positions
+  const positions = await robinhood.getPositions(db);
+  internal.log(`Positions updated... ${(positions.filter((p) => (parseFloat(p.quantity) > 0))).length} stock(s) in portfolio.`);
 
   // load user's elected strategies
   const strategies = await db.all(`
@@ -127,8 +130,10 @@ export async function main(settings) {
   // attach secondary databases relevant to strategy
   await db.run(`ATTACH DATABASE '${path.resolve(settings.home, 'twitter.db')}' AS twitter;`);
 
+  // rsa regex
+  const rsa = /^I'm buying (?<qty>\d+) shares? of \$(?<ticker>[a-z]{1,5}) by market close on (?<date>[a-z]{3} \d{1,2}, \d{4})\.$/i;
   // stock ticker regex
-  const ticker = /\$(?<ticker>[A-Z]{1,4})/ig;
+  const ticker = /\$(?<ticker>[A-Z]{1,5})/ig;
 
   while (!exit) {
     paused = false;
@@ -140,7 +145,7 @@ export async function main(settings) {
       internal.log(err);
     }
 
-    await eachSeries(following, async (tweeter, callback1) => {
+    await eachSeries(following, async (tweeter, tweeterCb) => {
       let cache;
       try {
         cache = await db.get('select * from twitter.tweets where created_at = (select MAX(created_at) from twitter.tweets where author_id = $author_id) and author_id = $author_id limit 1;', { $author_id: tweeter.id });
@@ -177,7 +182,7 @@ export async function main(settings) {
         internal.log(`${tweeter.name} has tweeted since we last checked!!\n`);
       }
 
-      await eachSeries(tweets, async (tweet, callback2) => {
+      await eachSeries(tweets, async (tweet, tweetCb) => {
         internal.log(`${tweet.created_at}:\n${tweet.text}\n`);
 
         try {
@@ -199,6 +204,15 @@ export async function main(settings) {
           });
         } catch (err) {
           internal.log(err);
+        }
+
+        // check for rsa match
+        // look for stock ticker symbols in tweet
+        if (tweeter.username === 'ReverseSplitArb' && typeof tweet.text === 'string') {
+          const match = rsa.exec(tweet.text);
+          if (match) {
+            internal.log(`${tweeter.id} said to buy ${match.groups.qty} of ${match.groups.ticker} by the close of ${DateTime.fromRFC2822().toISO()}!!`);
+          }
         }
 
         // look for stock ticker symbols in tweet
@@ -225,9 +239,9 @@ export async function main(settings) {
           // eslint-disable-next-line no-cond-assign
           } while ((match = ticker.exec(tweet.text)) !== null);
         }
-        callback2();
+        tweetCb();
       });
-      callback1();
+      tweeterCb();
     });
 
     // TODO: clean up old data

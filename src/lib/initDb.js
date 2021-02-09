@@ -83,6 +83,19 @@ export default async function initDb(home) {
       "raw"  TEXT NOT NULL,
       PRIMARY KEY("broker","id")
     );
+    CREATE TABLE IF NOT EXISTS "elected_strategies" (
+      "id"  INTEGER NOT NULL,
+      "updated_at"  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY("id")
+    );
+    CREATE TABLE IF NOT EXISTS "positions" (
+      "broker"  TEXT NOT NULL,
+      "symbol"  TEXT NOT NULL,
+      "qty"  INTEGER NOT NULL,
+      "average_cost"  NUMERIC NOT NULL,
+      "raw"  TEXT NOT NULL,
+      PRIMARY KEY("broker","symbol")
+    );
     DELETE FROM sqlite_sequence;
     INSERT INTO sqlite_sequence VALUES('strategies',2);
     INSERT INTO sqlite_sequence VALUES('credentials',1);

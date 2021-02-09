@@ -73,10 +73,10 @@ app.on('activate', async () => {
     }, '/index.html');
     main.maximize();
     const hidden = await createWindow({
-      // show: false,
+      show: false,
       title: 'hidden window',
-      width: 800,
-      height: 600,
+      // width: 800,
+      // height: 600,
       webPreferences: {
         // Use pluginOptions.nodeIntegration, leave this alone
         // eslint-disable-next-line max-len

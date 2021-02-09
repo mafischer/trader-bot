@@ -3,6 +3,7 @@
     <h1>Pick an Available Strategy</h1>
     <form id="strat" @submit.prevent="stratCb">
       <label>Strategies</label>
+      <br>
       <select v-model="strategy">
         <option value=null disabled selected>select a strategy</option>
         <option v-for="strategy in strategies" :value="strategy" v-bind:key="strategy.id">{{strategy.name}}</option>
@@ -17,7 +18,7 @@
     <br>
     <h1>Active Strategies:</h1>
     <div v-for="chosen in elected" v-bind:key="chosen.id">
-      <span>{{chosen.name}}</span>
+      <span>{{chosen.name}}</span> &nbsp; <button v-on:click="removeStrategy(chosen.id)">Remove</button>
       <p>{{chosen.description}}</p>
     </div>
   </div>
@@ -32,6 +33,9 @@ export default {
     };
   },
   methods: {
+    removeStrategy(id) {
+      this.$parent.removeStrategy(id);
+    },
     stratCb() {
       if (this.elected.indexOf(this.strategy) === -1) {
         this.elected.push(this.strategy);

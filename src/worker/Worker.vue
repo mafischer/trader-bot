@@ -1,6 +1,6 @@
 <template>
   <div id="irrelevant">
-    <p>Nothing going on here</p>
+    <p>Pay no attention to the man behind the curtain.</p>
   </div>
 </template>
 
