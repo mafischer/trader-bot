@@ -211,7 +211,7 @@ export async function main(settings) {
         if (tweeter.username === 'ReverseSplitArb' && typeof tweet.text === 'string') {
           const match = rsa.exec(tweet.text);
           if (match) {
-            internal.log(`${tweeter.id} said to buy ${match.groups.qty} of ${match.groups.ticker} by the close of ${DateTime.fromRFC2822().toISO()}!!`);
+            internal.log(`@${tweeter.username} said to buy ${match.groups.qty} of ${match.groups.ticker} by the close of ${DateTime.utc.fromFormat(match.groups.date, 'LLL dd, yyyy', { zone: 'America/New_York', hour: 16 }).toISO()}!!`);
           }
         }
 
