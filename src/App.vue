@@ -2,6 +2,7 @@
   <div id="app">
     <div id="nav">
       <router-link to="/">Home</router-link> |
+      <router-link to="/strategies">Strategies</router-link> |
       <router-link v-if="$store.state.credentials === null" to="/login">Login</router-link>
       <router-link v-else to="/logout">Logout</router-link>
     </div>
