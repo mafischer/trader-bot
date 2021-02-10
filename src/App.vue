@@ -4,7 +4,22 @@
       v-model="drawer"
       app
     >
-      <!--  -->
+      <v-list>
+        <v-list-item
+          v-for="[icon, text, href] in links"
+          :key="icon"
+          link
+          :to="href"
+        >
+          <v-list-item-icon>
+            <v-icon>{{ icon }}</v-icon>
+          </v-list-item-icon>
+
+          <v-list-item-content>
+            <v-list-item-title>{{ text }}</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+      </v-list>
     </v-navigation-drawer>
 
     <v-app-bar
@@ -42,6 +57,12 @@ export default {
 
   data: () => ({
     drawer: null,
+    links: [
+      ['mdi-home', 'Home', '/'],
+      ['mdi-sigma', 'Strategies', '/strategies'],
+      ['mdi-login', 'Login', '/login'],
+      ['mdi-logout', 'Logout', '/logout'],
+    ],
   }),
 };
 </script>
