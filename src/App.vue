@@ -1,34 +1,47 @@
 <template>
-  <div id="app">
-    <div id="nav">
-      <router-link to="/">Home</router-link> |
-      <router-link to="/strategies">Strategies</router-link> |
-      <router-link v-if="$store.state.credentials === null" to="/login">Login</router-link>
-      <router-link v-else to="/logout">Logout</router-link>
-    </div>
-    <router-view/>
-  </div>
+  <v-app id="inspire">
+    <v-navigation-drawer
+      v-model="drawer"
+      app
+    >
+      <!--  -->
+    </v-navigation-drawer>
+
+    <v-app-bar
+      app
+      color="primary"
+      dark
+    >
+      <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
+
+      <v-toolbar-title>Home</v-toolbar-title>
+    </v-app-bar>
+
+    <v-main>
+      <div id="nav">
+        <router-link to="/">Home</router-link> |
+        <router-link to="/strategies">Strategies</router-link> |
+        <router-link v-if="$store.state.credentials === null" to="/login">Login</router-link>
+        <router-link v-else to="/logout">Logout</router-link>
+      </div>
+      <router-view/>
+      <!-- <HelloWorld/> -->
+    </v-main>
+  </v-app>
 </template>
 
-<style lang="scss">
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-}
+<script>
+// import HelloWorld from './components/HelloWorld.vue';
 
-#nav {
-  padding: 30px;
+export default {
+  name: 'App',
 
-  a {
-    font-weight: bold;
-    color: #2c3e50;
+  components: {
+    // HelloWorld,
+  },
 
-    &.router-link-exact-active {
-      color: #42b983;
-    }
-  }
-}
-</style>
+  data: () => ({
+    drawer: null,
+  }),
+};
+</script>
