@@ -1,25 +1,36 @@
 <template>
   <div class="strategies">
     <h1>Pick an Available Strategy</h1>
-    <form id="strat" @submit.prevent="stratCb">
-      <label>Strategies</label>
-      <br>
-      <select v-model="strategy">
-        <option value=null disabled selected>select a strategy</option>
-        <option v-for="strategy in strategies" :value="strategy" v-bind:key="strategy.id">{{strategy.name}}</option>
-      </select>
-      <div v-if="strategy !== null">
-        <span>Description:</span>
-        <br>
-        <p>{{strategy.description}}</p>
-        <button>Continue</button>
-      </div>
-    </form>
+    <v-form id="strat" @submit.prevent="stratCb">
+      <v-select
+        v-model="strategy"
+        placeholder="select a strategy"
+        no-data-text="no strategies available"
+        :items="availableStrategies "
+        label="Strategies"
+        required
+      >
+      </v-select>
+      <v-card v-if="strategy !== null">
+        <v-card-title>{{strategy.name}}</v-card-title>
+        <v-card-text>{{strategy.description}}</v-card-text>
+        <v-card-actions>
+          <v-btn type="submit" text color="light-green">Add</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-form>
     <br>
     <h1>Active Strategies:</h1>
     <div v-for="chosen in elected" v-bind:key="chosen.id">
-      <span>{{chosen.name}}</span> &nbsp; <button v-on:click="removeStrategy(chosen.id)">Remove</button>
-      <p>{{chosen.description}}</p>
+      <v-card>
+        <v-card-title>{{chosen.name}}</v-card-title>
+        <v-card-text>{{chosen.description}}</v-card-text>
+        <v-card-actions>
+          <v-btn color="amber" text v-on:click="pauseStrategy(chosen.id)">Pause</v-btn>
+          <v-btn color="red" text v-on:click="removeStrategy(chosen.id)">Remove</v-btn>
+        </v-card-actions>
+      </v-card>
+      <p></p>
     </div>
   </div>
 </template>
@@ -32,8 +43,23 @@ export default {
       strategy: null,
     };
   },
+  computed: {
+    availableStrategies() {
+      let available = [];
+      if (Array.isArray(this.strategies)) {
+        available = this.strategies.map((s) => ({
+          text: s.name,
+          value: s,
+        }));
+      }
+      return available;
+    },
+  },
   methods: {
     removeStrategy(id) {
+      this.$parent.removeStrategy(id);
+    },
+    pauseStrategy(id) {
       this.$parent.removeStrategy(id);
     },
     stratCb() {

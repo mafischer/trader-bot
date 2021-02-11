@@ -2,9 +2,21 @@
   <v-app id="inspire">
     <v-navigation-drawer
       v-model="drawer"
+      color="light-green lighten-5"
       app
     >
-      <v-list>
+      <v-list v-if="$store.state.credentials === null">
+        <v-list-item to="/login">
+          <v-list-item-icon>
+            <v-icon>mdi-login</v-icon>
+          </v-list-item-icon>
+
+          <v-list-item-content>
+            <v-list-item-title>Login</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+      </v-list>
+      <v-list v-else>
         <v-list-item
           v-for="[icon, text, href] in links"
           :key="icon"
@@ -19,49 +31,43 @@
             <v-list-item-title>{{ text }}</v-list-item-title>
           </v-list-item-content>
         </v-list-item>
+        <v-list-item to="/logout">
+          <v-list-item-icon>
+            <v-icon>mdi-logout</v-icon>
+          </v-list-item-icon>
+
+          <v-list-item-content>
+            <v-list-item-title>Logout</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
       </v-list>
     </v-navigation-drawer>
 
     <v-app-bar
       app
-      color="primary"
+      color="light-green"
       dark
     >
       <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
 
-      <v-toolbar-title>Home</v-toolbar-title>
+      <v-toolbar-title>{{ $route.name }}</v-toolbar-title>
     </v-app-bar>
 
     <v-main>
-      <div id="nav">
-        <router-link to="/">Home</router-link> |
-        <router-link to="/strategies">Strategies</router-link> |
-        <router-link v-if="$store.state.credentials === null" to="/login">Login</router-link>
-        <router-link v-else to="/logout">Logout</router-link>
-      </div>
       <router-view/>
-      <!-- <HelloWorld/> -->
     </v-main>
   </v-app>
 </template>
 
 <script>
-// import HelloWorld from './components/HelloWorld.vue';
 
 export default {
   name: 'App',
-
-  components: {
-    // HelloWorld,
-  },
-
   data: () => ({
     drawer: null,
     links: [
       ['mdi-home', 'Home', '/'],
       ['mdi-sigma', 'Strategies', '/strategies'],
-      ['mdi-login', 'Login', '/login'],
-      ['mdi-logout', 'Logout', '/logout'],
     ],
   }),
 };

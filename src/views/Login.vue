@@ -3,8 +3,7 @@
     <form v-if="$store.state.credentials === null" id="sso" @submit.prevent="loginCb">
       <label for="password">Password</label>
       <input v-model="password" type="password" placeholder="Enter password"/>
-      <button type="submit">submit</button>
-      <button>Logout</button>
+      <v-btn color="blue" type="submit">submit</v-btn>
     </form>
     <form v-else-if="$store.state.credentials.robinhood === undefined" id="rh" @submit.prevent="robinhoodCb">
       <label for="ruser">Robinhood Userid</label>
@@ -12,13 +11,13 @@
       <br>
       <label for="rpw">Robinhood Password</label>
       <input v-model="rpw" type="password" placeholder="Enter password"/>
-      <button type="submit">Login</button>
+      <v-btn color="blue" type="submit">Login</v-btn>
     </form>
     <form v-else-if="$store.state.credentials.twitter === undefined" id="rh" @submit.prevent="twitterCb">
       <p>{{ $store.state.credentials.twitter }}</p>
       <label for="ttoken">Twitter Bearer Token</label>
       <input v-model="ttoken" type="text" placeholder="Enter Token"/>
-      <button type="submit">submit</button>
+      <v-btn color="blue" type="submit">submit</v-btn>
     </form>
   </div>
 </template>
