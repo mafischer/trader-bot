@@ -8,6 +8,7 @@ export default new Vuex.Store({
     cryptr: null,
     credentials: null,
     db: null,
+    log: null,
   },
   mutations: {
     updateCredentials(state, credentials) {
@@ -18,6 +19,9 @@ export default new Vuex.Store({
     },
     updateDb(state, db) {
       state.db = db;
+    },
+    updateLog(state, log) {
+      state.log = log;
     },
   },
   actions: {

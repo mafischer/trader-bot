@@ -6,6 +6,7 @@ import Robinhood from 'robinhood';
 const internal = {
   credentials: null,
   cryptr: null,
+  log: console.log,
 };
 
 const supported = ['robinhood', 'twitter'];
@@ -25,12 +26,12 @@ async function retrieveCredentials(db) {
     // parse credentials
     creds = JSON.parse(creds);
 
-    console.log('Credentials successfully decrypted!');
+    internal.log('Credentials successfully decrypted!');
 
     return creds;
   } catch (err) {
     internal.cryptr = undefined;
-    console.log('incorrect password!');
+    internal.log('incorrect password!');
     throw new Error('invalid password!');
   }
 }
@@ -48,7 +49,12 @@ export function missingCredentials(creds) {
   return missing;
 }
 
-export async function login(filename, password) {
+export async function login({ filename, password, log }) {
+  // configure log function
+  if (log) {
+    internal.log = log;
+  }
+
   // open the sqlite database
   // no try catch because we want app to fail if this isn't working.
   const db = await open({

@@ -60,10 +60,22 @@
 </template>
 
 <script>
+import { remote, ipcRenderer } from 'electron';
+import getLogger from './logger';
+
+const { app } = remote;
+const home = app.getAppPath('userData');
+const logger = getLogger(home);
+
+ipcRenderer.on('worker-log', async (event, { level, log }) => {
+  logger.log(level, log);
+});
 
 export default {
   name: 'App',
   created() {
+    // store log function in vuex
+    this.$store.commit('updateLog', logger.log);
     if (!this.loggedIn) {
       this.$router.push('/login');
     }

@@ -33,10 +33,6 @@ const { app, dialog } = remote;
 const home = app.getAppPath('userData');
 const browserWindow = remote.getCurrentWindow();
 
-ipcRenderer.on('worker-log', async (event, log) => {
-  console.log(log);
-});
-
 // import { openDb } from '../util/db';
 
 export default {
@@ -74,7 +70,11 @@ export default {
           cryptr,
           db,
           missing,
-        } = await login(path.resolve(home, 'trader.db'), this.password);
+        } = await login({
+          filename: path.resolve(home, 'trader.db'),
+          password: this.password,
+          log: self.$store.log,
+        });
         self.$store.commit('updateCredentials', credentials);
         self.$store.commit('updateCryptr', cryptr);
         self.$store.commit('updateDb', db);

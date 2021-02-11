@@ -33,19 +33,31 @@ const internal = {
 
 // keep tabs on the process
 const watch = setInterval(() => {
-  internal.log(`\n${DateTime.local().toISO()} - process stats:\ncpu:\n${JSON.stringify(process.cpuUsage())}\nmemory:\n${JSON.stringify(process.memoryUsage())}`);
+  internal.log({
+    level: 'info',
+    log: `\n${DateTime.local().toISO()} - process stats:\ncpu:\n${JSON.stringify(process.cpuUsage())}\nmemory:\n${JSON.stringify(process.memoryUsage())}`,
+  });
 }, 600000);
 
 // graceful shutdown
 export async function gracefulShutdown() {
-  internal.log('preparing for shutddown..');
+  internal.log({
+    level: 'info',
+    log: 'preparing for shutddown..',
+  });
   clearInterval(watch);
   if (db && typeof db.close === 'function') {
     try {
       await db.close();
-      internal.log('ready for shutdown.');
+      internal.log({
+        level: 'info',
+        log: 'ready for shutdown.',
+      });
     } catch (err) {
-      internal.log(`forcing shutdown shutdown because of:\n${err.message}`);
+      internal.log({
+        level: 'info',
+        log: `forcing shutdown shutdown because of:\n${err.message}`,
+      });
     }
     internal.quit();
   }
@@ -63,7 +75,10 @@ if (process.platform === 'win32') {
   });
 }
 process.on('SIGINT', async () => {
-  internal.log('\nCaught interrupt signal');
+  internal.log({
+    level: 'info',
+    log: '\nCaught interrupt signal',
+  });
   exit = true;
   if (paused) {
     await gracefulShutdown(db);
@@ -88,7 +103,10 @@ export async function main(settings) {
   }
   initialized = true;
   internal.log = settings.log;
-  internal.log('initializing..\n');
+  internal.log({
+    level: 'info',
+    log: 'initializing..\n',
+  });
 
   // open the sqlite database
   // no try catch because we want app to fail if this isn't working.
@@ -105,15 +123,24 @@ export async function main(settings) {
 
   // get accounts
   const accounts = await robinhood.getAccounts(db);
-  internal.log(`Pull data for ${accounts.length} robinhood accounts`);
+  internal.log({
+    level: 'info',
+    log: `Pull data for ${accounts.length} robinhood accounts`,
+  });
 
   // get order history
   const orders = await robinhood.orderHistory(db);
-  internal.log(`Transaction history downloaded... found ${orders.length} new records.`);
+  internal.log({
+    level: 'info',
+    log: `Transaction history downloaded... found ${orders.length} new records.`,
+  });
 
   // get current positions
   const positions = await robinhood.getPositions(db);
-  internal.log(`Positions updated... ${(positions.filter((p) => (parseFloat(p.quantity) > 0))).length} stock(s) in portfolio.`);
+  internal.log({
+    level: 'info',
+    log: `Positions updated... ${(positions.filter((p) => (parseFloat(p.quantity) > 0))).length} stock(s) in portfolio.`,
+  });
 
   // load user's elected strategies
   const strategies = await db.all(`
@@ -124,7 +151,10 @@ export async function main(settings) {
 
   // TODO: run trading logic based on elected strategies
   if (strategies.length > 0) {
-    internal.log(`Executing strategies:\n${JSON.stringify(strategies.map((e) => (e.name)))}\n`);
+    internal.log({
+      level: 'info',
+      log: `Executing strategies:\n${JSON.stringify(strategies.map((e) => (e.name)))}\n`,
+    });
   }
 
   // attach secondary databases relevant to strategy
@@ -142,7 +172,10 @@ export async function main(settings) {
     try {
       following = await db.all('select * from twitter.following;');
     } catch (err) {
-      internal.log(err);
+      internal.log({
+        level: 'error',
+        log: err,
+      });
     }
 
     await eachSeries(following, async (tweeter, tweeterCb) => {
@@ -150,7 +183,10 @@ export async function main(settings) {
       try {
         cache = await db.get('select * from twitter.tweets where created_at = (select MAX(created_at) from twitter.tweets where author_id = $author_id) and author_id = $author_id limit 1;', { $author_id: tweeter.id });
       } catch (err) {
-        internal.log(err);
+        internal.log({
+          level: 'error',
+          log: err,
+        });
       }
 
       // fetch latest data for strategy
@@ -174,16 +210,25 @@ export async function main(settings) {
           queryParams.pagination_token = response.meta.next_token;
         } while (response.meta.next_token !== undefined);
       } catch (err) {
-        internal.log(err);
+        internal.log({
+          level: 'error',
+          log: err,
+        });
       }
 
       // analyze new tweets and store in db
       if (tweets.length > 0) {
-        internal.log(`${tweeter.name} has tweeted since we last checked!!\n`);
+        internal.log({
+          level: 'info',
+          log: `${tweeter.name} has tweeted since we last checked!!\n`,
+        });
       }
 
       await eachSeries(tweets, async (tweet, tweetCb) => {
-        internal.log(`${tweet.created_at}:\n${tweet.text}\n`);
+        internal.log({
+          level: 'info',
+          log: `${tweet.created_at}:\n${tweet.text}\n`,
+        });
 
         try {
           await db.run(`
@@ -203,7 +248,10 @@ export async function main(settings) {
             $geo: tweet.geo !== undefined ? JSON.stringify(tweet.geo) : null,
           });
         } catch (err) {
-          internal.log(err);
+          internal.log({
+            level: 'error',
+            log: err,
+          });
         }
 
         // check for rsa match
@@ -211,7 +259,10 @@ export async function main(settings) {
         if (tweeter.username === 'ReverseSplitArb' && typeof tweet.text === 'string') {
           const match = rsa.exec(tweet.text);
           if (match) {
-            internal.log(`@${tweeter.username} said to buy ${match.groups.qty} of ${match.groups.ticker} by the close of ${DateTime.utc.fromFormat(match.groups.date, 'LLL dd, yyyy', { zone: 'America/New_York', hour: 16 }).toISO()}!!`);
+            internal.log({
+              level: 'info',
+              log: `@${tweeter.username} said to buy ${match.groups.qty} of ${match.groups.ticker} by the close of ${DateTime.utc.fromFormat(match.groups.date, 'LLL dd, yyyy', { zone: 'America/New_York', hour: 16 }).toISO()}!!`,
+            });
           }
         }
 
@@ -222,14 +273,23 @@ export async function main(settings) {
             match = ticker.exec(tweet.text);
             if (match) {
               const stock = match.groups.ticker;
-              internal.log(`${tweeter.name} tweeted about ticker symbol ${stock} in their tweet!!`);
+              internal.log({
+                level: 'info',
+                log: `${tweeter.name} tweeted about ticker symbol ${stock} in their tweet!!`,
+              });
 
               // quote stock
               try {
                 const response = await promisify(robinhood.quote_data)(stock);
-                internal.log(`\nquote for ${stock}:\n${JSON.stringify(response.body)}\n`);
+                internal.log({
+                  level: 'info',
+                  log: `\nquote for ${stock}:\n${JSON.stringify(response.body)}\n`,
+                });
               } catch (err) {
-                internal.log(err);
+                internal.log({
+                  level: 'error',
+                  log: err,
+                });
               }
 
               // execute trade (ask for permission from owner if low probability score)
