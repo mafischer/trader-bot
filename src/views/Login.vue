@@ -1,24 +1,20 @@
 <template>
   <div>
-    <form v-if="$store.state.credentials === null" id="sso" @submit.prevent="loginCb">
-      <label for="password">Password</label>
-      <input v-model="password" type="password" placeholder="Enter password"/>
+    <v-form v-if="$store.state.credentials === null" id="sso" @submit.prevent="loginCb">
+      <v-text-field v-model="password" type="password" placeholder="Enter password"></v-text-field>
+      <v-btn color="blue" text type="submit">Login</v-btn>
+    </v-form>
+    <v-form v-else-if="$store.state.credentials.robinhood === undefined" id="rh" @submit.prevent="robinhoodCb">
+      <v-text-field v-model="ruser" label="Robinhood Userid" type="text" placeholder="Enter userid"></v-text-field>
+      <v-text-field v-model="rpw" label="Robinhood Password" type="password" placeholder="Enter password"></v-text-field>
+      <v-btn color="light-green" type="submit">Save Credentials</v-btn>
+    </v-form>
+    <v-form v-else-if="$store.state.credentials.twitter === undefined" id="rh" @submit.prevent="twitterCb">
+      <v-text-field v-model="ttoken" label="Twitter Bearer Token" type="text" placeholder="Enter Token"></v-text-field>
+      <v-text-field v-model="tkey" label="Twitter Consumer Key" type="text" placeholder="Enter Key"></v-text-field>
+      <v-text-field v-model="tsecret" label="Twitter Consumer Secret" type="text" placeholder="Enter Secret"></v-text-field>
       <v-btn color="blue" type="submit">submit</v-btn>
-    </form>
-    <form v-else-if="$store.state.credentials.robinhood === undefined" id="rh" @submit.prevent="robinhoodCb">
-      <label for="ruser">Robinhood Userid</label>
-      <input v-model="ruser" type="text" placeholder="Enter Userid"/>
-      <br>
-      <label for="rpw">Robinhood Password</label>
-      <input v-model="rpw" type="password" placeholder="Enter password"/>
-      <v-btn color="blue" type="submit">Login</v-btn>
-    </form>
-    <form v-else-if="$store.state.credentials.twitter === undefined" id="rh" @submit.prevent="twitterCb">
-      <p>{{ $store.state.credentials.twitter }}</p>
-      <label for="ttoken">Twitter Bearer Token</label>
-      <input v-model="ttoken" type="text" placeholder="Enter Token"/>
-      <v-btn color="blue" type="submit">submit</v-btn>
-    </form>
+    </v-form>
   </div>
 </template>
 
@@ -52,6 +48,8 @@ export default {
       ruser: null,
       rh: null,
       ttoken: null,
+      tsecret: null,
+      tkey: null,
     };
   },
   updated() {
@@ -146,10 +144,17 @@ export default {
       }
     },
     async twitterCb() {
-      await updateCredentials(this.$store.state.db, this.$store.state.cryptr, {
-        ...this.$store.state.credentials,
-        twitter: this.ttoken,
-      });
+      const self = this;
+      const credentials = {
+        ...self.$store.state.credentials,
+        twitter: {
+          bearer_token: self.ttoken,
+          consumer_key: self.tkey,
+          consumer_secret: self.tsecret,
+        },
+      };
+      await updateCredentials(self.$store.state.db, self.$store.state.cryptr, credentials);
+      self.$store.commit('updateCredentials', credentials);
     },
   },
 };

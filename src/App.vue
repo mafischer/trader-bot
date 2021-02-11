@@ -5,7 +5,7 @@
       color="light-green lighten-5"
       app
     >
-      <v-list v-if="$store.state.credentials === null">
+      <v-list v-if="!loggedIn">
         <v-list-item to="/login">
           <v-list-item-icon>
             <v-icon>mdi-login</v-icon>
@@ -63,6 +63,19 @@
 
 export default {
   name: 'App',
+  created() {
+    if (!this.loggedIn) {
+      this.$router.push('/login');
+    }
+  },
+  computed: {
+    loggedIn() {
+      const { credentials } = this.$store.state;
+      return credentials !== null
+        && Object.prototype.hasOwnProperty.call(credentials, 'robinhood')
+        && Object.prototype.hasOwnProperty.call(credentials, 'twitter');
+    },
+  },
   data: () => ({
     drawer: null,
     links: [
