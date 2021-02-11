@@ -34,7 +34,7 @@ const internal = {
 // keep tabs on the process
 const watch = setInterval(() => {
   internal.log({
-    level: 'info',
+    level: 'debug',
     log: `\n${DateTime.local().toISO()} - process stats:\ncpu:\n${JSON.stringify(process.cpuUsage())}\nmemory:\n${JSON.stringify(process.memoryUsage())}`,
   });
 }, 600000);

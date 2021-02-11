@@ -76,6 +76,7 @@ export default {
   created() {
     // store log function in vuex
     this.$store.commit('updateLog', logger.log);
+    this.$store.commit('updateHome', home);
     if (!this.loggedIn) {
       this.$router.push('/login');
     }
@@ -93,6 +94,7 @@ export default {
     links: [
       ['mdi-home', 'Home', '/'],
       ['mdi-sigma', 'Strategies', '/strategies'],
+      ['mdi-note-text', 'Logs', '/logs'],
     ],
   }),
 };

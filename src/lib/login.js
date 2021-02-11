@@ -26,12 +26,18 @@ async function retrieveCredentials(db) {
     // parse credentials
     creds = JSON.parse(creds);
 
-    internal.log('Credentials successfully decrypted!');
+    internal.log({
+      level: 'info',
+      log: 'Credentials successfully decrypted!',
+    });
 
     return creds;
   } catch (err) {
     internal.cryptr = undefined;
-    internal.log('incorrect password!');
+    internal.log({
+      level: 'error',
+      log: err,
+    });
     throw new Error('invalid password!');
   }
 }

@@ -2,6 +2,7 @@ import Vue from 'vue';
 import VueRouter from 'vue-router';
 import Home from '../views/Home.vue';
 import Strategies from '../views/Strategies.vue';
+import Logs from '../views/Logs.vue';
 import Login from '../views/Login.vue';
 import Logout from '../views/Logout.vue';
 
@@ -17,6 +18,11 @@ const routes = [
     path: '/strategies',
     name: 'Strategies',
     component: Strategies,
+  },
+  {
+    path: '/logs',
+    name: 'Logs',
+    component: Logs,
   },
   {
     path: '/login',

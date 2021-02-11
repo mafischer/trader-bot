@@ -28,7 +28,10 @@ async function getPositions(db) {
         });
         positionCb();
       } catch (err) {
-        this.log(err);
+        this.log({
+          level: 'error',
+          log: err,
+        });
         positionCb(err);
       }
     });
@@ -57,7 +60,10 @@ async function getAccounts(db) {
         });
         accountCb();
       } catch (err) {
-        this.log(err);
+        this.log({
+          level: 'error',
+          log: err,
+        });
         accountCb(err);
       }
     });
@@ -79,7 +85,10 @@ async function orderHistory(db, fromDate) {
         latestCached = DateTime.fromISO(latestCached).plus({ milliseconds: 1 }).toUTC().toISO();
       }
     } catch (err) {
-      this.log(err);
+      this.log({
+        level: 'error',
+        log: err,
+      });
     }
   }
 
@@ -105,7 +114,10 @@ async function orderHistory(db, fromDate) {
         next = null;
       }
     } catch (err) {
-      this.log(err);
+      this.log({
+        level: 'error',
+        log: err,
+      });
       next = null;
     }
   } while (next !== null);
@@ -142,7 +154,10 @@ async function orderHistory(db, fromDate) {
       });
       orderCb();
     } catch (err) {
-      this.log(err);
+      this.log({
+        level: 'error',
+        log: err,
+      });
       orderCb();
     }
   });

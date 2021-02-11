@@ -9,6 +9,7 @@ export default new Vuex.Store({
     credentials: null,
     db: null,
     log: null,
+    home: null,
   },
   mutations: {
     updateCredentials(state, credentials) {
@@ -22,6 +23,9 @@ export default new Vuex.Store({
     },
     updateLog(state, log) {
       state.log = log;
+    },
+    updateHome(state, home) {
+      state.home = home;
     },
   },
   actions: {
