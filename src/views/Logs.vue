@@ -20,15 +20,22 @@ export default {
   name: 'Logs',
   methods: {
     fetchLogs() {
+      let count = 0;
       const self = this;
-      self.logs = [];
+      if (self.logFile !== `info-${DateTime.local().toFormat('yyyy-MM-dd')}.log`) {
+        self.logFile = `info-${DateTime.local().toFormat('yyyy-MM-dd')}.log`;
+        self.logs = [];
+      }
       const readInterface = readline.createInterface({
         input: fs.createReadStream(path.resolve(self.$store.state.home, `info-${DateTime.local().toFormat('yyyy-MM-dd')}.log`)),
         output: process.stdout,
         console: false,
       });
       readInterface.on('line', (line) => {
-        self.logs.push(JSON.parse(line));
+        count += 1;
+        if (self.logs.length < count) {
+          self.logs.push(JSON.parse(line));
+        }
       });
     },
   },
@@ -36,6 +43,7 @@ export default {
     return {
       logInterval: null,
       logs: [],
+      logFile: null,
       headers: [{
         text: 'Level',
         align: 'start',
@@ -53,10 +61,10 @@ export default {
   },
   created() {
     const self = this;
+    self.logFile = `info-${DateTime.local().toFormat('yyyy-MM-dd')}.log`;
     self.fetchLogs();
     self.logInterval = setInterval(() => {
       self.fetchLogs();
-      console.log('fetching');
     }, 5000);
   },
   beforeDestroy() {
