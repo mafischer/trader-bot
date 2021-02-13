@@ -58,7 +58,7 @@ app.on('activate', async () => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (BrowserWindow.getAllWindows().length === 0) {
-    const main = await createWindow({
+    const ui = await createWindow({
       title: name,
       width: 800,
       height: 600,
@@ -71,8 +71,8 @@ app.on('activate', async () => {
         webSecurity: false,
       },
     }, '/index.html');
-    main.maximize();
-    const hidden = await createWindow({
+    ui.maximize();
+    const main = await createWindow({
       show: false,
       title: 'hidden window',
       // width: 800,
@@ -86,7 +86,8 @@ app.on('activate', async () => {
         webSecurity: false,
       },
     }, '/worker.html');
-    hidden.maximize();
+    // main.maximize();
+    main.hide();
   }
 });
 
@@ -137,7 +138,8 @@ app.on('ready', async () => {
       webSecurity: false,
     },
   }, '/worker.html');
-  main.maximize();
+  // main.maximize();
+  main.hide();
 
   // send login event to hidden window (data )
   ipcMain.on('login', (event, payload) => {
