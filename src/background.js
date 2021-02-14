@@ -1,15 +1,20 @@
+/* eslint-disable no-undef */
 import {
   app,
   protocol,
   BrowserWindow,
   ipcMain,
+  Tray,
+  Menu,
 } from 'electron';
+import path from 'path';
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib';
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
 import { version, name, author } from '../package.json';
 import initDb from './lib/initDb';
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
+let tray = null;
 
 // set app about
 app.setAboutPanelOptions({
@@ -28,19 +33,34 @@ protocol.registerSchemesAsPrivileged([
   { scheme: 'app', privileges: { secure: true, standard: true } },
 ]);
 
-async function createWindow(options, path) {
+async function createWindow(options, html) {
   // Create the browser window.
   const win = new BrowserWindow(options);
 
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     // Load the url of the dev server if in development mode
-    await win.loadURL(`${process.env.WEBPACK_DEV_SERVER_URL}${path}`);
+    await win.loadURL(`${process.env.WEBPACK_DEV_SERVER_URL}${html}`);
     if (!process.env.IS_TEST) win.webContents.openDevTools();
   } else {
     createProtocol('app');
     // Load the index.html when not in development
-    win.loadURL(`app://.${path}`);
+    win.loadURL(`app://.${html}`);
   }
+
+  win.on('minimize', (event) => {
+    event.preventDefault();
+    win.hide();
+  });
+
+  win.on('close', (event) => {
+    // TODO: store quit state in variable
+    if (!app.isQuiting) {
+      event.preventDefault();
+      win.hide();
+    }
+
+    return false;
+  });
 
   return win;
 }
@@ -72,6 +92,25 @@ app.on('activate', async () => {
       },
     }, '/index.html');
     ui.maximize();
+    const contextMenu = Menu.buildFromTemplate([
+      {
+        label: 'Configure',
+        click: () => {
+          ui.show();
+        },
+      },
+      {
+        label: 'Quit',
+        click: () => {
+          app.isQuiting = true;
+          app.quit();
+        },
+      },
+    ]);
+
+    tray.setContextMenu(contextMenu);
+
+    // create hiden window process
     const main = await createWindow({
       show: false,
       title: 'hidden window',
@@ -108,6 +147,10 @@ app.on('ready', async () => {
       console.error(e.message);
     }
   }
+
+  tray = new Tray(path.resolve(__static, 'iconTemplate.png'));
+  tray.setToolTip('Trader Bot');
+
   const ui = await createWindow({
     title: name,
     width: 800,
@@ -122,6 +165,23 @@ app.on('ready', async () => {
     },
   }, '/index.html');
   ui.maximize();
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: 'Configure',
+      click: () => {
+        ui.show();
+      },
+    },
+    {
+      label: 'Quit',
+      click: () => {
+        app.isQuiting = true;
+        app.quit();
+      },
+    },
+  ]);
+
+  tray.setContextMenu(contextMenu);
 
   // create hidden window for main applicaiton code
   const main = await createWindow({
