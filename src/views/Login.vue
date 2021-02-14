@@ -10,9 +10,9 @@
       <v-btn color="light-green" type="submit">Save Credentials</v-btn>
     </v-form>
     <v-form v-else-if="$store.state.credentials.twitter === undefined" id="rh" @submit.prevent="twitterCb">
-      <v-text-field v-model="ttoken" label="Twitter Bearer Token" type="text" placeholder="Enter Token"></v-text-field>
-      <v-text-field v-model="tkey" label="Twitter Consumer Key" type="text" placeholder="Enter Key"></v-text-field>
-      <v-text-field v-model="tsecret" label="Twitter Consumer Secret" type="text" placeholder="Enter Secret"></v-text-field>
+      <v-text-field v-model="ttoken" label="Twitter Bearer Token" type="text" placeholder="Enter Bearer Token"></v-text-field>
+      <v-text-field v-model="tkey" label="Twitter Access token" type="text" placeholder="Enter Access Token"></v-text-field>
+      <v-text-field v-model="tsecret" label="Twitter Access Token Secret" type="text" placeholder="Enter Access Token Secret"></v-text-field>
       <v-btn color="blue" type="submit">submit</v-btn>
     </v-form>
   </div>
