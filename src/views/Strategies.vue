@@ -12,7 +12,7 @@ import path from 'path';
 import { openDb } from '../lib/db';
 
 const { app } = remote;
-const home = app.getAppPath('userData');
+const home = app.getPath('userData');
 let db = null;
 
 export default {

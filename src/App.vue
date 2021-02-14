@@ -64,7 +64,7 @@ import { remote, ipcRenderer } from 'electron';
 import getLogger from './logger';
 
 const { app } = remote;
-const home = app.getAppPath('userData');
+const home = app.getPath('userData');
 const logger = getLogger(home);
 
 ipcRenderer.on('worker-log', async (event, { level, log }) => {

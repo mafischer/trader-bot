@@ -20,9 +20,10 @@ export default async function initDb(home) {
     CREATE TABLE IF NOT EXISTS "strategies" (
       "id"  INTEGER NOT NULL,
       "name"  TEXT NOT NULL UNIQUE,
+      "description"  TEXT NOT NULL,
       PRIMARY KEY("id" AUTOINCREMENT)
     );
-    INSERT INTO strategies VALUES(1,'reverse_stock_arbitrage');
+    INSERT INTO strategies VALUES(1,'reverse_stock_arbitrage',Schedule the purchase of  1 share of stock 10 minutes prior to the market close on last trading day before said stock is scheduled to undergo a reverse stock split.);
     CREATE TABLE IF NOT EXISTS "credentials" (
       "id"  INTEGER NOT NULL CHECK(id=1),
       "credentials"  TEXT NOT NULL,

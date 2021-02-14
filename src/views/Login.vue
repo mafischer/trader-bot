@@ -30,7 +30,7 @@ import {
 } from '../lib/login';
 
 const { app, dialog } = remote;
-const home = app.getAppPath('userData');
+const home = app.getPath('userData');
 const browserWindow = remote.getCurrentWindow();
 
 // import { openDb } from '../util/db';

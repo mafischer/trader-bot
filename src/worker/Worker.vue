@@ -14,7 +14,7 @@ function quit() {
 
 const { app } = remote;
 const internal = {
-  home: app.getAppPath('userData'),
+  home: app.getPath('userData'),
   log: (log) => {
     ipcRenderer.send('worker-log', log);
   },

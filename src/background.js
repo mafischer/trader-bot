@@ -26,7 +26,7 @@ app.setAboutPanelOptions({
 });
 
 // get the app root directory
-const home = app.getAppPath('userData');
+const home = app.getPath('userData');
 
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([
@@ -141,11 +141,13 @@ app.on('ready', async () => {
     } catch (e) {
       console.error('Vue Devtools failed to install:', e.toString());
     }
-    try {
-      await initDb(home);
-    } catch (e) {
-      console.error(e.message);
-    }
+  }
+
+  // initialize local db's
+  try {
+    await initDb(home);
+  } catch (e) {
+    console.error(e.message);
   }
 
   tray = new Tray(path.resolve(__static, 'iconTemplate.png'));

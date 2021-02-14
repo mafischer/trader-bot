@@ -1,6 +1,6 @@
 {
   "name": "trader-bot",
-  "version": "1.0.0",
+  "version": "1.0.0-alpha.1",
   "private": true,
   "description": "Stock trader bot",
   "author": {
@@ -49,7 +49,7 @@
     "babel-eslint": "^10.1.0",
     "chai": "^4.3.0",
     "chai-as-promised": "^7.1.1",
-    "electron": "^11.2.3",
+    "electron": "^12.0.0-beta.25",
     "electron-builder": "^22.10.4",
     "electron-devtools-installer": "^3.1.0",
     "eslint": "^6.7.2",
