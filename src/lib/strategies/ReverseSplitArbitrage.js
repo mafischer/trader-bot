@@ -120,9 +120,8 @@ export default class ReverseSplitArbitrage extends Strategy {
                 log: `\nquote for ${match.groups.ticker}:\n${JSON.stringify(body)}\n`,
               });
               await self.brokers.robinhood.p_place_buy_order({
-                type: 'limit',
+                type: 'market',
                 quantity: 1,
-                bid_price: 1.00,
                 instrument: {
                   url: body.instrument,
                   symbol: match.groups.ticker,
