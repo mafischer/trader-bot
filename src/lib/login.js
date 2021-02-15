@@ -36,7 +36,7 @@ async function retrieveCredentials(db) {
     internal.cryptr = undefined;
     internal.log({
       level: 'error',
-      log: err,
+      log: err.message,
     });
     throw new Error('invalid password!');
   }

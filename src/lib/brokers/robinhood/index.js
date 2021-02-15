@@ -30,7 +30,7 @@ async function getPositions(db) {
       } catch (err) {
         this.log({
           level: 'error',
-          log: err,
+          log: err.message,
         });
         positionCb(err);
       }
@@ -62,7 +62,7 @@ async function getAccounts(db) {
       } catch (err) {
         this.log({
           level: 'error',
-          log: err,
+          log: err.message,
         });
         accountCb(err);
       }
@@ -87,7 +87,7 @@ async function orderHistory(db, fromDate) {
     } catch (err) {
       this.log({
         level: 'error',
-        log: err,
+        log: err.message,
       });
     }
   }
@@ -116,7 +116,7 @@ async function orderHistory(db, fromDate) {
     } catch (err) {
       this.log({
         level: 'error',
-        log: err,
+        log: err.message,
       });
       next = null;
     }
@@ -156,7 +156,7 @@ async function orderHistory(db, fromDate) {
     } catch (err) {
       this.log({
         level: 'error',
-        log: err,
+        log: err.message,
       });
       orderCb();
     }

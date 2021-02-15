@@ -44,8 +44,8 @@ export function strategyAction({ action, strategy }) {
 
 // graceful shutdown
 export async function gracefulShutdown() {
-  eachOf(internal.strategies, async (strategy, strategyCb) => {
-    await internal.strategies[strategy].stop();
+  await eachOf(internal.strategies, async (strategy, strategyCb) => {
+    await strategy.stop();
     strategyCb();
   });
   internal.log({

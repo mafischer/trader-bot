@@ -23,7 +23,7 @@ export default class ReverseSplitArbitrage extends Strategy {
     } catch (err) {
       self.log({
         level: 'error',
-        log: err,
+        log: err.message,
       });
     }
 
@@ -34,7 +34,7 @@ export default class ReverseSplitArbitrage extends Strategy {
       } catch (err) {
         self.log({
           level: 'error',
-          log: err,
+          log: err.message,
         });
       }
 
@@ -61,7 +61,7 @@ export default class ReverseSplitArbitrage extends Strategy {
       } catch (err) {
         self.log({
           level: 'error',
-          log: err,
+          log: err.message,
         });
       }
 
@@ -99,7 +99,7 @@ export default class ReverseSplitArbitrage extends Strategy {
         } catch (err) {
           self.log({
             level: 'error',
-            log: err,
+            log: err.message,
           });
         }
 
@@ -130,7 +130,7 @@ export default class ReverseSplitArbitrage extends Strategy {
             } catch (err) {
               self.log({
                 level: 'error',
-                log: err,
+                log: err.message,
               });
             }
           }
@@ -158,7 +158,7 @@ export default class ReverseSplitArbitrage extends Strategy {
         //       } catch (err) {
         //         this.log({
         //           level: 'error',
-        //           log: err,
+        //           log: err.message,
         //         });
         //       }
 

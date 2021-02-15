@@ -34,8 +34,16 @@ ipcRenderer.on('credentials-update', (event, creds) => {
 });
 
 ipcRenderer.on('quit', async () => {
-  await gracefulShutdown();
-  ipcRenderer.send('exit');
+  try {
+    await gracefulShutdown();
+  } catch (err) {
+    internal.log({
+      level: 'error',
+      log: err.message,
+    });
+  } finally {
+    ipcRenderer.send('exit');
+  }
 });
 
 export default {

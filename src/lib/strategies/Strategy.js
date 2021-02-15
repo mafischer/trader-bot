@@ -31,7 +31,7 @@ export default class Strategy {
       this.running = undefined;
       this.log({
         level: 'error',
-        log: err,
+        log: err.message,
       });
     });
   }
