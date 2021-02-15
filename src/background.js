@@ -127,6 +127,20 @@ app.on('activate', async () => {
     }, '/worker.html');
     // main.maximize();
     main.hide();
+
+    // send login event to hidden window (data )
+    ipcMain.on('login', (event, payload) => {
+      main.webContents.send('login', payload);
+    });
+    // send log event to main window
+    ipcMain.on('worker-log', (event, log) => {
+      ui.webContents.send('worker-log', log);
+    });
+
+    // quit on exit signal
+    ipcMain.on('quit', () => {
+      app.quit();
+    });
   }
 });
 

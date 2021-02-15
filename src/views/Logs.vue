@@ -4,6 +4,8 @@
       :headers="headers"
       :items="logs"
       class="elevation-1"
+      hide-default-footer
+      disable-pagination
     >
     </v-data-table>
   </div>

@@ -1,193 +1,175 @@
-/* eslint-disable consistent-return */
-/* eslint-disable no-cond-assign */
-/* eslint-disable no-prototype-builtins */
-/* eslint-disable no-restricted-globals */
-/* eslint-disable no-undef */
-/* eslint-disable no-loop-func */
 /* eslint-disable no-await-in-loop */
-/* eslint-disable class-methods-use-this */
-/* eslint-disable constructor-super */
-/* eslint-disable no-this-before-super */
-/* eslint-disable no-unused-vars */
-import path from 'path';
+import { DateTime } from 'luxon';
 import { eachSeries } from 'async-es';
-import { Strategy } from './Strategy';
+import Strategy from './Strategy';
 
-class ReverseSplitArbitrage extends Strategy {
+export default class ReverseSplitArbitrage extends Strategy {
   constructor(config) {
-    this.super(config);
+    super(config);
 
-    // create && attach new db
+    this.name = 'Reverse Split Arbitrage';
 
-    // start the strategy
-    this.main();
+    // rsa regex
+    this.rsa = /^I'm buying (?<qty>\d+) shares? of \$(?<ticker>[a-z]{1,5}) by market close on (?<date>[a-z]{3} \d{1,2}, \d{4})\.$/i;
+    // stock ticker regex
+    this.ticker = /\$(?<ticker>[A-Z]{1,5})/ig;
   }
 
   async main() {
-    console.log('initializing..\n');
-
-    // wait for broker initialization
-
-    /**
-        * robinhood
-        * */
-
-    // no try catch because we want app to fail if this isn't working.
-    const rh = await robinhood;
-
-    // get investment_profile
-    await new Promise((resolve, reject) => {
-      rh.investment_profile((err, response, body) => {
-        if (err) {
-          return reject(err);
-        }
-        console.log('robinhood investment profile downloaded successfully.\n');
-        resolve(body);
+    const self = this;
+    let following;
+    try {
+      following = await self.db.all('select * from twitter.following where username = \'ReverseSplitArb\';');
+    } catch (err) {
+      self.log({
+        level: 'error',
+        log: err,
       });
-    });
+    }
 
-    /**
-        * webull
-        * */
-
-    /**
-        * fidelity
-        * */
-
-    // open the sqlite database
-    // no try catch because we want app to fail if this isn't working.
-    db = await open({
-      filename: './trader.db',
-      driver: sqlite3.cached.Database,
-    });
-
-    // load user's elected strategies
-    // no try catch because we want app to fail if this isn't working.
-    const strategies = await db.all('select * from strategies;');
-
-    // TODO: run trading logic based on elected strategies
-    console.log(`Executing strategies:\n${JSON.stringify(strategies)}\n`);
-
-    // attach secondary databases relevant to strategy
-    // no try catch because we want app to fail if this isn't working.
-    await db.run(`ATTACH DATABASE '${path.resolve(__dirname, 'twitter.db')}' AS twitter;`);
-
-    // stock ticker regex
-    const ticker = /\$(?<ticker>[A-Z]{1,4})/ig;
-
-    while (!exit) {
-      paused = false;
-
-      let following;
+    await eachSeries(following, async (tweeter, tweeterCb) => {
+      let cache;
       try {
-        following = await db.all('select * from twitter.following;');
+        cache = await self.db.get('select * from twitter.tweets where created_at = (select MAX(created_at) from twitter.tweets where author_id = $author_id) and author_id = $author_id limit 1;', { $author_id: tweeter.id });
       } catch (err) {
-        console.log(err);
+        self.log({
+          level: 'error',
+          log: err,
+        });
       }
 
-      await eachSeries(following, async (tweeter) => {
-        let cache;
-        try {
-          cache = await db.get('select * from twitter.tweets where created_at = (select MAX(created_at) from twitter.tweets where author_id = $author_id) and author_id = $author_id limit 1;', { $author_id: tweeter.id });
-        } catch (err) {
-          console.log(err);
-        }
-
-        // fetch latest data for strategy
-        const queryParams = {
-          start_time: `${DateTime.utc().minus({ days: 10 }).toISO()}`,
-          exclude: 'retweets,replies',
-          'tweet.fields': 'id,text,created_at,context_annotations,entities,withheld,public_metrics,geo,author_id',
-        };
-        // set since_id to avoide duplicate data
-        if (cache && cache.id) {
-          queryParams.since_id = cache.id;
-        }
-        let tweets;
-        try {
-          tweets = await twitter.get(`users/${tweeter.id}/tweets`, queryParams);
-        } catch (err) {
-          console.log(err);
-        }
-
-        // analyze new tweets and store in db
-        if (tweets.hasOwnProperty('data') && Array.isArray(tweets.data)) {
-          if (tweets.meta.result_count > 0) {
-            console.log(`${tweeter.name} has tweeted since we last checked!!\n`);
-          } else {
-            console.log(`No new tweets from ${tweeter.name} :(\n`);
+      // fetch latest data for strategy
+      const queryParams = {
+        start_time: `${DateTime.utc().minus({ years: 1 }).toISO()}`,
+        exclude: 'retweets,replies',
+        'tweet.fields': 'id,text,created_at,context_annotations,entities,withheld,public_metrics,geo,author_id',
+      };
+      // set since_id to avoide duplicate data
+      if (cache && cache.id) {
+        queryParams.since_id = cache.id;
+      }
+      let tweets = [];
+      try {
+        let response;
+        do {
+          response = await self.api.twitter.get(`users/${tweeter.id}/tweets`, queryParams);
+          if (response.meta.result_count > 0) {
+            tweets = [...tweets, ...response.data];
           }
+          queryParams.pagination_token = response.meta.next_token;
+        } while (response.meta.next_token !== undefined);
+      } catch (err) {
+        self.log({
+          level: 'error',
+          log: err,
+        });
+      }
 
-          await eachSeries(tweets.data, async (tweet) => {
-            console.log(`${tweet.created_at}:\n${tweet.text}\n`);
+      // analyze new tweets and store in db
+      if (tweets.length > 0) {
+        self.log({
+          level: 'info',
+          log: `${tweeter.name} has tweeted since we last checked!!\n`,
+        });
+      }
 
-            try {
-              await db.run(`
-                                insert into twitter.tweets
-                                (id, author_id, created_at, text, entities, public_metrics, context_annotations, withheld, geo)
-                                values
-                                ($id, $author_id, $created_at, $text, $entities, $public_metrics, $context_annotations, $withheld, $geo);
-                            `, {
-                $id: tweet.id,
-                $author_id: tweet.author_id,
-                $created_at: tweet.created_at,
-                $text: tweet.text,
-                $entities: JSON.stringify(tweet.entities),
-                $public_metrics: JSON.stringify(tweet.public_metrics),
-                $context_annotations: JSON.stringify(tweet.context_annotations),
-                $withheld: JSON.stringify(tweet.withheld),
-                $geo: JSON.stringify(tweet.geo),
-              });
-            } catch (err) {
-              console.log(err);
-            }
+      await eachSeries(tweets, async (tweet, tweetCb) => {
+        self.log({
+          level: 'info',
+          log: `${tweet.created_at}:\n${tweet.text}\n`,
+        });
 
-            // look for stock ticker symbols in tweet
-            if (typeof tweet.text === 'string') {
-              let match;
-              do {
-                match = ticker.exec(tweet.text);
-                if (match) {
-                  const stock = match.groups.ticker;
-                  console.log(`${tweeter.name} tweeted about ticker symbol ${stock} in their tweet!!`);
-
-                  // quote stock
-                  try {
-                    await new Promise((resolve, reject) => {
-                      rh.quote_data(stock, (error, response, body) => {
-                        if (error) {
-                          reject(err);
-                        } else {
-                          console.log(`\nquote for ${stock}:\n${JSON.stringify(body)}\n`);
-                          resolve(body);
-                        }
-                      });
-                    });
-                  } catch (err) {
-                    console.log(err);
-                  }
-
-                  // execute trade (ask for permission from owner if low probability score)
-
-                  // add trade to watch
-                }
-              } while ((match = ticker.exec(tweet.text)) !== null);
-            }
+        try {
+          await self.db.run(`
+            insert into twitter.tweets
+            (id, author_id, created_at, text, entities, public_metrics, context_annotations, withheld, geo)
+            values
+            ($id, $author_id, $created_at, $text, $entities, $public_metrics, $context_annotations, $withheld, $geo);
+          `, {
+            $id: tweet.id || null,
+            $author_id: tweet.author_id || null,
+            $created_at: tweet.created_at || null,
+            $text: tweet.text || null,
+            $entities: tweet.entities !== undefined ? JSON.stringify(tweet.entities) : null,
+            $public_metrics: tweet.public_metrics !== undefined ? JSON.stringify(tweet.public_metrics) : null,
+            $context_annotations: tweet.context_annotations !== undefined ? JSON.stringify(tweet.context_annotations) : null,
+            $withheld: tweet.withheld !== undefined ? JSON.stringify(tweet.withheld) : null,
+            $geo: tweet.geo !== undefined ? JSON.stringify(tweet.geo) : null,
+          });
+        } catch (err) {
+          self.log({
+            level: 'error',
+            log: err,
           });
         }
+
+        // check for rsa match
+        // look for stock ticker symbols in tweet
+        if (tweeter.username === 'ReverseSplitArb' && typeof tweet.text === 'string') {
+          const match = self.rsa.exec(tweet.text);
+          if (match) {
+            self.log({
+              level: 'info',
+              log: `@${tweeter.username} said to buy ${match.groups.qty} of ${match.groups.ticker} by the close of ${DateTime.utc.fromFormat(match.groups.date, 'LLL dd, yyyy', { zone: 'America/New_York', hour: 16 }).toISO()}!!`,
+            });
+            // execute market buy for each enabled broker
+            try {
+              const { body } = await self.robinhood.p_quote_data(match.groups.ticker);
+              self.log({
+                level: 'info',
+                log: `\nquote for ${match.groups.ticker}:\n${JSON.stringify(body)}\n`,
+              });
+              await self.brokers.robinhood.p_place_buy_order({
+                type: 'limit',
+                quantity: 1,
+                bid_price: 1.00,
+                instrument: {
+                  url: body.instrument,
+                  symbol: match.groups.ticker,
+                },
+              });
+            } catch (err) {
+              self.log(err);
+            }
+          }
+        }
+
+        // look for stock ticker symbols in tweet
+        // if (typeof tweet.text === 'string') {
+        //   let match;
+        //   do {
+        //     match = this.ticker.exec(tweet.text);
+        //     if (match) {
+        //       const stock = match.groups.ticker;
+        //       this.log({
+        //         level: 'info',
+        //         log: `${tweeter.name} tweeted about ticker symbol ${stock} in their tweet!!`,
+        //       });
+
+        //       // quote stock
+        //       try {
+        //         const response = await promisify(this.robinhood.quote_data)(stock);
+        //         this.log({
+        //           level: 'info',
+        //           log: `\nquote for ${stock}:\n${JSON.stringify(response.body)}\n`,
+        //         });
+        //       } catch (err) {
+        //         this.log({
+        //           level: 'error',
+        //           log: err,
+        //         });
+        //       }
+
+        //       // execute trade (ask for permission from owner if low probability score)
+
+        //       // add trade to watch
+        //     }
+        //   // eslint-disable-next-line no-cond-assign
+        //   } while ((match = this.ticker.exec(tweet.text)) !== null);
+        // }
+        tweetCb();
       });
-
-      // TODO: clean up old data
-
-      // graceful shutdown
-      if (exit) {
-        break;
-      }
-
-      // wait 10 seconds before polling data and/or making trades
-      paused = true;
-      await sleep(10000);
-    }
-    await gracefulShutdown();
+      tweeterCb();
+    });
   }
 }
