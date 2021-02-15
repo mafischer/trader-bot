@@ -112,10 +112,10 @@ app.on('activate', async () => {
 
     // create hiden window process
     const main = await createWindow({
-      show: false,
+      // show: false,
       title: 'hidden window',
-      // width: 800,
-      // height: 600,
+      width: 800,
+      height: 600,
       webPreferences: {
         // Use pluginOptions.nodeIntegration, leave this alone
         // eslint-disable-next-line max-len
@@ -125,8 +125,13 @@ app.on('activate', async () => {
         webSecurity: false,
       },
     }, '/worker.html');
-    // main.maximize();
-    main.hide();
+    main.maximize();
+    // main.hide();
+
+    // relay strategy event to main process
+    ipcMain.on('strategy', (event, payload) => {
+      main.webContents.send('strategy', payload);
+    });
 
     // send login event to hidden window (data )
     ipcMain.on('login', (event, payload) => {
@@ -201,10 +206,10 @@ app.on('ready', async () => {
 
   // create hidden window for main applicaiton code
   const main = await createWindow({
-    show: false,
+    // show: false,
     title: 'hidden window',
-    // width: 800,
-    // height: 600,
+    width: 800,
+    height: 600,
     webPreferences: {
       // Use pluginOptions.nodeIntegration, leave this alone
       // eslint-disable-next-line max-len
@@ -214,8 +219,13 @@ app.on('ready', async () => {
       webSecurity: false,
     },
   }, '/worker.html');
-  // main.maximize();
-  main.hide();
+  main.maximize();
+  // main.hide();
+
+  // relay strategy event to main process
+  ipcMain.on('strategy', (event, payload) => {
+    main.webContents.send('strategy', payload);
+  });
 
   // send login event to hidden window (data )
   ipcMain.on('login', (event, payload) => {

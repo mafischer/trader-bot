@@ -6,7 +6,7 @@
         v-model="strategy"
         placeholder="select a strategy"
         no-data-text="no strategies available"
-        :items="availableStrategies "
+        :items="availableStrategies"
         label="Strategies"
         required
       >
@@ -21,16 +21,26 @@
     </v-form>
     <br>
     <h1>Active Strategies:</h1>
-    <div v-for="chosen in elected" v-bind:key="chosen.id">
+    <div v-for="chosen in active" v-bind:key="chosen.id">
       <v-card>
         <v-card-title>{{chosen.name}}</v-card-title>
         <v-card-text>{{chosen.description}}</v-card-text>
         <v-card-actions>
-          <v-btn color="amber" text v-on:click="pauseStrategy(chosen.id)">Pause</v-btn>
-          <v-btn color="red" text v-on:click="removeStrategy(chosen.id)">Remove</v-btn>
+          <v-btn color="amber" text v-on:click="pauseStrategy(chosen)">Pause</v-btn>
+          <v-btn color="red" text v-on:click="removeStrategy(chosen)">Remove</v-btn>
         </v-card-actions>
       </v-card>
-      <p></p>
+    </div>
+    <h1>Paused Strategies:</h1>
+    <div v-for="chosen in paused" v-bind:key="chosen.id">
+      <v-card>
+        <v-card-title>{{chosen.name}}</v-card-title>
+        <v-card-text>{{chosen.description}}</v-card-text>
+        <v-card-actions>
+          <v-btn color="light-green" text v-on:click="resumeStrategy(chosen)">Resume</v-btn>
+          <v-btn color="red" text v-on:click="removeStrategy(chosen)">Remove</v-btn>
+        </v-card-actions>
+      </v-card>
     </div>
   </div>
 </template>
@@ -54,20 +64,40 @@ export default {
       }
       return available;
     },
+    active() {
+      if (Array.isArray(this.elected)) {
+        return this.elected.filter((e) => (e.active === 1));
+      }
+      return [];
+    },
+    paused() {
+      if (Array.isArray(this.elected)) {
+        return this.elected.filter((e) => (e.active === 0));
+      }
+      return [];
+    },
   },
   methods: {
-    removeStrategy(id) {
-      this.$parent.removeStrategy(id);
+    removeStrategy(strategy) {
+      this.$parent.removeStrategy(strategy);
     },
-    pauseStrategy(id) {
-      this.$parent.removeStrategy(id);
+    pauseStrategy(strategy) {
+      this.$parent.pauseStrategy(strategy);
+    },
+    resumeStrategy(strategy) {
+      this.$parent.resumeStrategy(strategy);
     },
     stratCb() {
-      if (this.elected.indexOf(this.strategy) === -1) {
-        this.elected.push(this.strategy);
+      const electee = {
+        ...this.strategy,
+        // active by default
+        active: 1,
+      };
+      if (this.active.indexOf(this.strategy) === -1) {
+        this.elected.push(electee);
         this.strategy = null;
       }
-      this.$parent.updateStrategies(this.elected);
+      this.$parent.addStrategy(electee);
     },
   },
   props: {

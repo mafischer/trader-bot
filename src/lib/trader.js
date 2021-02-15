@@ -25,6 +25,23 @@ const watch = setInterval(() => {
   });
 }, 600000);
 
+export function strategyAction({ action, strategy }) {
+  if (Object.prototype.hasOwnProperty.call(internal.strategies, strategy.class)) {
+    switch (action) {
+      case 'add':
+      case 'resume':
+        internal.strategies[strategy.class].start(10000);
+        break;
+      case 'remove':
+      case 'pause':
+        internal.strategies[strategy.class].stop();
+        break;
+      default:
+        break;
+    }
+  }
+}
+
 // graceful shutdown
 export async function gracefulShutdown() {
   eachOf(internal.strategies, async (strategy, strategyCb) => {
@@ -115,7 +132,7 @@ export async function main(settings) {
 
   // load user's elected strategies
   const elected = await db.all(`
-    SELECT s.*, es.updated_at FROM elected_strategies es
+    SELECT s.*, es.active, es.updated_at FROM elected_strategies es
     JOIN strategies s
     ON es.id = s.id;
   `);
@@ -132,13 +149,14 @@ export async function main(settings) {
     ReverseSplitArbitrage: new ReverseSplitArbitrage(rsaConfig),
   };
 
-  if (elected.length > 0) {
-    elected.forEach((electee) => {
-      internal.strategies[electee.class].start(10000);
-    });
-    internal.log({
-      level: 'info',
-      log: `Executing strategies:\n${JSON.stringify(elected.map((e) => (e.name)))}\n`,
-    });
-  }
+  // start active strategies
+  elected.forEach((electee) => {
+    if (Object.prototype.hasOwnProperty.call(electee, 'active')
+      && electee.active === 1) {
+      if (Object.prototype.hasOwnProperty.call(electee, 'class')
+        && Object.prototype.hasOwnProperty.call(internal.strategies, electee.class)) {
+        internal.strategies[electee.class].start(10000);
+      }
+    }
+  });
 }

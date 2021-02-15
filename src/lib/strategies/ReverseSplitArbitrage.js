@@ -129,7 +129,10 @@ export default class ReverseSplitArbitrage extends Strategy {
                 },
               });
             } catch (err) {
-              self.log(err);
+              self.log({
+                level: 'error',
+                log: err,
+              });
             }
           }
         }

@@ -87,6 +87,7 @@ export default async function initDb(home) {
     );
     CREATE TABLE IF NOT EXISTS "elected_strategies" (
       "id"  INTEGER NOT NULL,
+      "active"  INTEGER NOT NULL,
       "updated_at"  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       PRIMARY KEY("id")
     );

@@ -29,7 +29,10 @@ export default class Strategy {
       this.running = undefined;
     }).catch((err) => {
       this.running = undefined;
-      this.log('error', err);
+      this.log({
+        level: 'error',
+        log: err,
+      });
     });
   }
 
@@ -49,7 +52,10 @@ export default class Strategy {
   }
 
   async stop() {
-    this.log('info', `Stopping strategy ${this.constructor.name}`);
+    this.log({
+      level: 'info',
+      log: `Stopping strategy ${this.constructor.name}`,
+    });
     clearInterval(this.mainInterval);
     if (this.running) {
       await this.running;

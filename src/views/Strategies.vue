@@ -7,7 +7,7 @@
 <script>
 // @ is an alias to /src
 import StrategySelector from '@/components/StrategySelector.vue';
-import { remote } from 'electron';
+import { remote, ipcRenderer } from 'electron';
 import path from 'path';
 import { openDb } from '../lib/db';
 
@@ -28,23 +28,58 @@ export default {
     };
   },
   methods: {
-    async removeStrategy(id) {
+    async addStrategy(strategy) {
+      await this.updateStrategies([strategy]);
+      ipcRenderer.send('strategy', {
+        action: 'add',
+        strategy,
+      });
+    },
+    async pauseStrategy(strategy) {
+      await db.run(`
+        UPDATE elected_strategies
+        set active = 0
+        where id = $id;
+      `, { $id: strategy.id });
+      await this.updateStrategies();
+      ipcRenderer.send('strategy', {
+        action: 'pause',
+        strategy,
+      });
+    },
+    async resumeStrategy(strategy) {
+      await db.run(`
+        UPDATE elected_strategies
+        set active = 1
+        where id = $id;
+      `, { $id: strategy.id });
+      await this.updateStrategies();
+      ipcRenderer.send('strategy', {
+        action: 'resume',
+        strategy,
+      });
+    },
+    async removeStrategy(strategy) {
       await db.run(`
         DELETE FROM elected_strategies
         WHERE id = $id;
-      `, { $id: id });
+      `, { $id: strategy.id });
       await this.updateStrategies();
+      ipcRenderer.send('strategy', {
+        action: 'remove',
+        strategy,
+      });
     },
     async updateStrategies(chosen) {
       const self = this;
       if (Array.isArray(chosen)) {
         Promise.all(chosen.map((strategy) => (async () => {
           db.run(`
-            INSERT INTO elected_strategies (id)
-            VALUES ($id)
+            INSERT INTO elected_strategies (id, active)
+            VALUES ($id, $active)
             ON CONFLICT(id) DO UPDATE
-            SET updated_at = CURRENT_TIMESTAMP;
-          `, { $id: strategy.id });
+            SET active = $active, updated_at = CURRENT_TIMESTAMP;
+          `, { $id: strategy.id, $active: strategy.active });
         })()));
       }
       const [strategies, elected] = await Promise.all([
@@ -56,7 +91,7 @@ export default {
           ;
         `),
         db.all(`
-          SELECT s.*, es.updated_at FROM elected_strategies es
+          SELECT s.*, es.active, es.updated_at FROM elected_strategies es
           JOIN strategies s
           ON es.id = s.id;
         `),
@@ -66,10 +101,11 @@ export default {
     },
   },
   async mounted() {
+    const self = this;
     if (db === null) {
       db = await openDb(path.resolve(home, 'trader.db'));
     }
-    await this.updateStrategies(this.elected);
+    await this.updateStrategies(self.elected);
   },
   created() {
     if (this.$store.state.credentials === null) {

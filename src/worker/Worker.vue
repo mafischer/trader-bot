@@ -6,7 +6,7 @@
 
 <script>
 import { ipcRenderer, remote } from 'electron';
-import { main, gracefulShutdown } from '../lib/trader';
+import { main, gracefulShutdown, strategyAction } from '../lib/trader';
 
 function quit() {
   ipcRenderer.send('quit');
@@ -20,6 +20,13 @@ const internal = {
   },
   quit,
 };
+
+ipcRenderer.on('strategy', async (event, { strategy, action }) => {
+  strategyAction({
+    strategy,
+    action,
+  });
+});
 
 ipcRenderer.on('login', async (event, creds) => {
   internal.credentials = creds;
