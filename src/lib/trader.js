@@ -66,7 +66,6 @@ export async function gracefulShutdown() {
         log: `forcing shutdown shutdown because of:\n${err.message}`,
       });
     }
-    internal.quit();
   }
 }
 

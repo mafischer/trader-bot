@@ -92,23 +92,6 @@ app.on('activate', async () => {
       },
     }, '/index.html');
     ui.maximize();
-    const contextMenu = Menu.buildFromTemplate([
-      {
-        label: 'Configure',
-        click: () => {
-          ui.show();
-        },
-      },
-      {
-        label: 'Quit',
-        click: () => {
-          app.isQuiting = true;
-          app.quit();
-        },
-      },
-    ]);
-
-    tray.setContextMenu(contextMenu);
 
     // create hiden window process
     const main = await createWindow({
@@ -128,6 +111,24 @@ app.on('activate', async () => {
     main.maximize();
     // main.hide();
 
+    const contextMenu = Menu.buildFromTemplate([
+      {
+        label: 'Configure',
+        click: () => {
+          ui.show();
+        },
+      },
+      {
+        label: 'Quit',
+        click: () => {
+          app.isQuiting = true;
+          main.webContents.send('quit');
+        },
+      },
+    ]);
+
+    tray.setContextMenu(contextMenu);
+
     // relay strategy event to main process
     ipcMain.on('strategy', (event, payload) => {
       main.webContents.send('strategy', payload);
@@ -143,7 +144,7 @@ app.on('activate', async () => {
     });
 
     // quit on exit signal
-    ipcMain.on('quit', () => {
+    ipcMain.on('exit', () => {
       app.quit();
     });
   }
@@ -186,23 +187,6 @@ app.on('ready', async () => {
     },
   }, '/index.html');
   ui.maximize();
-  const contextMenu = Menu.buildFromTemplate([
-    {
-      label: 'Configure',
-      click: () => {
-        ui.show();
-      },
-    },
-    {
-      label: 'Quit',
-      click: () => {
-        app.isQuiting = true;
-        app.quit();
-      },
-    },
-  ]);
-
-  tray.setContextMenu(contextMenu);
 
   // create hidden window for main applicaiton code
   const main = await createWindow({
@@ -222,6 +206,24 @@ app.on('ready', async () => {
   main.maximize();
   // main.hide();
 
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: 'Configure',
+      click: () => {
+        ui.show();
+      },
+    },
+    {
+      label: 'Quit',
+      click: () => {
+        app.isQuiting = true;
+        main.webContents.send('quit');
+      },
+    },
+  ]);
+
+  tray.setContextMenu(contextMenu);
+
   // relay strategy event to main process
   ipcMain.on('strategy', (event, payload) => {
     main.webContents.send('strategy', payload);
@@ -237,7 +239,7 @@ app.on('ready', async () => {
   });
 
   // quit on exit signal
-  ipcMain.on('quit', () => {
+  ipcMain.on('exit', () => {
     app.quit();
   });
 });

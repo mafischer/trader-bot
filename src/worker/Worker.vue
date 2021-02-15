@@ -8,17 +8,12 @@
 import { ipcRenderer, remote } from 'electron';
 import { main, gracefulShutdown, strategyAction } from '../lib/trader';
 
-function quit() {
-  ipcRenderer.send('quit');
-}
-
 const { app } = remote;
 const internal = {
   home: app.getPath('userData'),
   log: (log) => {
     ipcRenderer.send('worker-log', log);
   },
-  quit,
 };
 
 ipcRenderer.on('strategy', async (event, { strategy, action }) => {
@@ -40,6 +35,7 @@ ipcRenderer.on('credentials-update', (event, creds) => {
 
 ipcRenderer.on('quit', async () => {
   await gracefulShutdown();
+  ipcRenderer.send('exit');
 });
 
 export default {
