@@ -26,7 +26,7 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
     - run: npm ci
-    - run: npm test
+    - run: npm run test:unit
     - run: npm run electron:build
 
   build-linux:
@@ -45,7 +45,7 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
     - run: npm ci
-    - run: npm test
+    - run: npm run test:unit
     - run: npm run electron:build
 
   build-windows:
@@ -64,5 +64,5 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
     - run: npm ci
-    - run: npm test
+    - run: npm run test:unit
     - run: npm run electron:build
