@@ -10,7 +10,7 @@ export default class ReverseSplitArbitrage extends Strategy {
     this.name = 'Reverse Split Arbitrage';
 
     // rsa regex
-    this.rsa = /^I'm buying (?<qty>\d+) shares? of \$(?<ticker>[a-z]{1,5}) by market close on (?<date>[a-z]{3} \d{1,2}, \d{4})\.$/i;
+    this.rsa = /^.*I'm buying (?<qty>\d+) shares? of \$(?<ticker>[a-z]{1,5}) by market close on (?<date>[a-z]{3} \d{1,2}, \d{4})\..*$/im;
     // stock ticker regex
     this.ticker = /\$(?<ticker>[A-Z]{1,5})/ig;
   }
@@ -76,7 +76,7 @@ export default class ReverseSplitArbitrage extends Strategy {
       await eachSeries(tweets, async (tweet, tweetCb) => {
         self.log({
           level: 'info',
-          log: `${tweet.created_at}:\n${tweet.text}\n`,
+          log: `${tweeter.name}: ${tweet.text}\n`,
         });
 
         try {
@@ -110,23 +110,34 @@ export default class ReverseSplitArbitrage extends Strategy {
           if (match) {
             self.log({
               level: 'info',
-              log: `@${tweeter.username} said to buy ${match.groups.qty} of ${match.groups.ticker} by the close of ${DateTime.utc.fromFormat(match.groups.date, 'LLL dd, yyyy', { zone: 'America/New_York', hour: 16 }).toISO()}!!`,
+              log: `@${tweeter.username} said to buy ${match.groups.qty} of ${match.groups.ticker} by the close of ${DateTime.fromFormat(match.groups.date, 'LLL dd, yyyy', { zone: 'America/New_York', hour: 16 }).toISO()}!!`,
             });
             // execute market buy for each enabled broker
             try {
-              const { body } = await self.robinhood.p_quote_data(match.groups.ticker);
+              const { body } = await self.brokers.robinhood.p_quote_data(match.groups.ticker);
               self.log({
                 level: 'info',
                 log: `\nquote for ${match.groups.ticker}:\n${JSON.stringify(body)}\n`,
               });
-              await self.brokers.robinhood.p_place_buy_order({
-                type: 'market',
-                quantity: 1,
-                instrument: {
-                  url: body.instrument,
-                  symbol: match.groups.ticker,
-                },
-              });
+              if (Object.prototype.hasOwnProperty.call(body, 'missing_instruments') && Array.isArray(body.missing_instruments) && body.missing_instruments.indexOf(match.groups.ticker) >= 0) {
+                self.log({
+                  level: 'warn',
+                  log: `Broker: ${'robinhood'} does not support ticker: ${match.groups.ticker}`,
+                });
+              } else {
+                await self.brokers.robinhood.p_place_buy_order({
+                  type: 'market',
+                  quantity: 1,
+                  instrument: {
+                    url: body.instrument,
+                    symbol: match.groups.ticker,
+                  },
+                });
+                self.log({
+                  level: 'info',
+                  log: `Attempted by of ${match.groups.ticker} on ${'robinhood'}.`,
+                });
+              }
             } catch (err) {
               self.log({
                 level: 'error',

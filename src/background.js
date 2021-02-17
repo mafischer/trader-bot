@@ -65,91 +65,6 @@ async function createWindow(options, html) {
   return win;
 }
 
-// Quit when all windows are closed.
-app.on('window-all-closed', () => {
-  // On macOS it is common for applications and their menu bar
-  // to stay active until the user quits explicitly with Cmd + Q
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
-});
-
-app.on('activate', async () => {
-  // On macOS it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
-  if (BrowserWindow.getAllWindows().length === 0) {
-    const ui = await createWindow({
-      title: name,
-      width: 800,
-      height: 600,
-      webPreferences: {
-        // Use pluginOptions.nodeIntegration, leave this alone
-        // eslint-disable-next-line max-len
-        // See nklayman.github.io/vue-cli-plugin-electron-builder/guide/security.html#node-integration for more info
-        nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION,
-        enableRemoteModule: true,
-        webSecurity: false,
-      },
-    }, '/index.html');
-    ui.maximize();
-
-    // create hiden window process
-    const main = await createWindow({
-      // show: false,
-      title: 'hidden window',
-      width: 800,
-      height: 600,
-      webPreferences: {
-        // Use pluginOptions.nodeIntegration, leave this alone
-        // eslint-disable-next-line max-len
-        // See nklayman.github.io/vue-cli-plugin-electron-builder/guide/security.html#node-integration for more info
-        nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION,
-        enableRemoteModule: true,
-        webSecurity: false,
-      },
-    }, '/worker.html');
-    main.maximize();
-    // main.hide();
-
-    const contextMenu = Menu.buildFromTemplate([
-      {
-        label: 'Configure',
-        click: () => {
-          ui.show();
-        },
-      },
-      {
-        label: 'Quit',
-        click: () => {
-          app.isQuiting = true;
-          main.webContents.send('quit');
-        },
-      },
-    ]);
-
-    tray.setContextMenu(contextMenu);
-
-    // relay strategy event to main process
-    ipcMain.on('strategy', (event, payload) => {
-      main.webContents.send('strategy', payload);
-    });
-
-    // send login event to hidden window (data )
-    ipcMain.on('login', (event, payload) => {
-      main.webContents.send('login', payload);
-    });
-    // send log event to main window
-    ipcMain.on('worker-log', (event, log) => {
-      ui.webContents.send('worker-log', log);
-    });
-
-    // quit on exit signal
-    ipcMain.on('exit', () => {
-      app.quit();
-    });
-  }
-});
-
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -190,10 +105,10 @@ app.on('ready', async () => {
 
   // create hidden window for main applicaiton code
   const main = await createWindow({
-    // show: false,
+    show: false,
     title: 'hidden window',
-    width: 800,
-    height: 600,
+    // width: 800,
+    // height: 600,
     webPreferences: {
       // Use pluginOptions.nodeIntegration, leave this alone
       // eslint-disable-next-line max-len
@@ -203,8 +118,8 @@ app.on('ready', async () => {
       webSecurity: false,
     },
   }, '/worker.html');
-  main.maximize();
-  // main.hide();
+  // main.maximize();
+  main.hide();
 
   const contextMenu = Menu.buildFromTemplate([
     {
@@ -218,6 +133,10 @@ app.on('ready', async () => {
       click: () => {
         app.isQuiting = true;
         main.webContents.send('quit');
+        // force quite after 5 seconds
+        setTimeout(() => {
+          app.quit();
+        }, 5000);
       },
     },
   ]);
