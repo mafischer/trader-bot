@@ -3,7 +3,7 @@ import { expect } from 'chai';
 const spectron = __non_webpack_require__('spectron');
 
 describe('Application launch', function () {
-  this.timeout(30000);
+  this.timeout(120000);
 
   beforeEach(async function () {
     const instance = await testWithSpectron(spectron)
