@@ -107,8 +107,6 @@ app.on('ready', async () => {
   const main = await createWindow({
     show: false,
     title: 'hidden window',
-    // width: 800,
-    // height: 600,
     webPreferences: {
       // Use pluginOptions.nodeIntegration, leave this alone
       // eslint-disable-next-line max-len
@@ -118,8 +116,6 @@ app.on('ready', async () => {
       webSecurity: false,
     },
   }, '/worker.html');
-  // main.maximize();
-  main.hide();
 
   const contextMenu = Menu.buildFromTemplate([
     {

@@ -44,13 +44,16 @@ export function strategyAction({ action, strategy }) {
 
 // graceful shutdown
 export async function gracefulShutdown() {
-  await eachOf(internal.strategies, async (strategy, key, strategyCb) => {
-    await strategy.stop();
-    strategyCb();
-  });
   internal.log({
     level: 'info',
     log: 'preparing for shutddown..',
+  });
+  await eachOf(internal.strategies, async (strategy, key, strategyCb) => {
+    await strategy.stop();
+    if (strategyCb) {
+      return strategyCb();
+    }
+    return null;
   });
   clearInterval(watch);
   if (db && typeof db.close === 'function') {
@@ -104,15 +107,23 @@ export async function main(settings) {
 
   // wait for api initialization
   const API = await api(settings.credentials);
+  internal.log({
+    level: 'info',
+    log: 'initialized api\'s',
+  });
 
   // wait for broker initialization
   const Brokers = await brokers(internal.log, settings.credentials);
+  internal.log({
+    level: 'info',
+    log: 'initialized brokers',
+  });
 
   // get accounts
   const accounts = await Brokers.robinhood.getAccounts(db);
   internal.log({
     level: 'info',
-    log: `Pull data for ${accounts.length} robinhood accounts`,
+    log: `Pulled data for ${accounts.length} robinhood accounts`,
   });
 
   // get order history
@@ -153,8 +164,8 @@ export async function main(settings) {
     if (Object.prototype.hasOwnProperty.call(electee, 'active')
       && electee.active === 1) {
       if (Object.prototype.hasOwnProperty.call(electee, 'class')
-        && Object.prototype.hasOwnProperty.call(internal.strategies, electee.class)) {
-        internal.strategies[electee.class].start(10000);
+        && Object.prototype.hasOwnProperty.call(internal.strategies, electee.className)) {
+        internal.strategies[electee.className].start(10000);
       }
     }
   });

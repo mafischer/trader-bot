@@ -13,6 +13,7 @@ const internal = {
   home: app.getPath('userData'),
   log: (log) => {
     ipcRenderer.send('worker-log', log);
+    console.log(log.log);
   },
 };
 
@@ -39,7 +40,10 @@ ipcRenderer.on('quit', async () => {
   } catch (err) {
     internal.log({
       level: 'error',
-      log: err.message,
+      log: JSON.stringify({
+        message: err.message,
+        stack: err.stack,
+      }),
     });
   } finally {
     ipcRenderer.send('exit');

@@ -1,4 +1,7 @@
+/* eslint-disable import/no-extraneous-dependencies */
 // vue.config.js
+// const TerserPlugin = require('terser-webpack-plugin');
+
 module.exports = {
   // options...
   pages: {
@@ -18,7 +21,18 @@ module.exports = {
     },
   },
   configureWebpack: {
-    devtool: 'source-map',
+    // devtool: 'source-map',
+    devtool: 'inline-source-map',
+    // optimization: {
+    //   minimize: true,
+    //   minimizer: [
+    //     new TerserPlugin({
+    //       terserOptions: {
+    //         mangle: false,
+    //       },
+    //     }),
+    //   ],
+    // },
   },
   transpileDependencies: [
     'vuetify',

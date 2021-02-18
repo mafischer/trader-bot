@@ -159,5 +159,5 @@ export default async function initDb(home) {
     console.log('sucessfully initialized twitter database');
   }
 
-  console.log('SQLite database are initialized.');
+  console.log('SQLite databases are initialized.');
 }

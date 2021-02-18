@@ -23,7 +23,10 @@ export default class ReverseSplitArbitrage extends Strategy {
     } catch (err) {
       self.log({
         level: 'error',
-        log: err.message,
+        log: JSON.stringify({
+          message: err.message,
+          stack: err.stack,
+        }),
       });
     }
 
@@ -34,7 +37,10 @@ export default class ReverseSplitArbitrage extends Strategy {
       } catch (err) {
         self.log({
           level: 'error',
-          log: err.message,
+          log: JSON.stringify({
+            message: err.message,
+            stack: err.stack,
+          }),
         });
       }
 
@@ -61,7 +67,10 @@ export default class ReverseSplitArbitrage extends Strategy {
       } catch (err) {
         self.log({
           level: 'error',
-          log: err.message,
+          log: JSON.stringify({
+            message: err.message,
+            stack: err.stack,
+          }),
         });
       }
 
@@ -99,7 +108,10 @@ export default class ReverseSplitArbitrage extends Strategy {
         } catch (err) {
           self.log({
             level: 'error',
-            log: err.message,
+            log: JSON.stringify({
+              message: err.message,
+              stack: err.stack,
+            }),
           });
         }
 
@@ -114,12 +126,13 @@ export default class ReverseSplitArbitrage extends Strategy {
             });
             // execute market buy for each enabled broker
             try {
-              const { body } = await self.brokers.robinhood.p_quote_data(match.groups.ticker);
+              const response = await self.brokers.robinhood.p_quote_data(match.groups.ticker);
+              const { body } = response;
               self.log({
                 level: 'info',
                 log: `\nquote for ${match.groups.ticker}:\n${JSON.stringify(body)}\n`,
               });
-              if (Object.prototype.hasOwnProperty.call(body, 'missing_instruments') && Array.isArray(body.missing_instruments) && body.missing_instruments.indexOf(match.groups.ticker) >= 0) {
+              if (body !== undefined || (Object.prototype.hasOwnProperty.call(body, 'missing_instruments') && Array.isArray(body.missing_instruments) && body.missing_instruments.indexOf(match.groups.ticker) >= 0)) {
                 self.log({
                   level: 'warn',
                   log: `Broker: ${'robinhood'} does not support ticker: ${match.groups.ticker}`,
@@ -141,48 +154,57 @@ export default class ReverseSplitArbitrage extends Strategy {
             } catch (err) {
               self.log({
                 level: 'error',
-                log: err.message,
+                log: JSON.stringify({
+                  message: err.message,
+                  stack: err.stack,
+                }),
               });
             }
           }
         }
-
-        // look for stock ticker symbols in tweet
-        // if (typeof tweet.text === 'string') {
-        //   let match;
-        //   do {
-        //     match = this.ticker.exec(tweet.text);
-        //     if (match) {
-        //       const stock = match.groups.ticker;
-        //       this.log({
-        //         level: 'info',
-        //         log: `${tweeter.name} tweeted about ticker symbol ${stock} in their tweet!!`,
-        //       });
-
-        //       // quote stock
-        //       try {
-        //         const response = await promisify(this.robinhood.quote_data)(stock);
-        //         this.log({
-        //           level: 'info',
-        //           log: `\nquote for ${stock}:\n${JSON.stringify(response.body)}\n`,
-        //         });
-        //       } catch (err) {
-        //         this.log({
-        //           level: 'error',
-        //           log: err.message,
-        //         });
-        //       }
-
-        //       // execute trade (ask for permission from owner if low probability score)
-
-        //       // add trade to watch
-        //     }
-        //   // eslint-disable-next-line no-cond-assign
-        //   } while ((match = this.ticker.exec(tweet.text)) !== null);
-        // }
-        tweetCb();
+        if (tweetCb) {
+          return tweetCb();
+        }
+        return null;
       });
-      tweeterCb();
+      if (tweeterCb) {
+        return tweeterCb();
+      }
+      return null;
     });
   }
 }
+
+// look for stock ticker symbols in tweet
+// if (typeof tweet.text === 'string') {
+//   let match;
+//   do {
+//     match = this.ticker.exec(tweet.text);
+//     if (match) {
+//       const stock = match.groups.ticker;
+//       this.log({
+//         level: 'info',
+//         log: `${tweeter.name} tweeted about ticker symbol ${stock} in their tweet!!`,
+//       });
+
+//       // quote stock
+//       try {
+//         const response = await promisify(this.robinhood.quote_data)(stock);
+//         this.log({
+//           level: 'info',
+//           log: `\nquote for ${stock}:\n${JSON.stringify(response.body)}\n`,
+//         });
+//       } catch (err) {
+//         this.log({
+//           level: 'error',
+//           log: err.message,
+//         });
+//       }
+
+//       // execute trade (ask for permission from owner if low probability score)
+
+//       // add trade to watch
+//     }
+//   // eslint-disable-next-line no-cond-assign
+//   } while ((match = this.ticker.exec(tweet.text)) !== null);
+// }

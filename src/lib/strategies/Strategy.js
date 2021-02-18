@@ -31,7 +31,10 @@ export default class Strategy {
       this.running = undefined;
       this.log({
         level: 'error',
-        log: err.message,
+        log: JSON.stringify({
+          message: err.message,
+          stack: err.stack,
+        }),
       });
     });
   }
@@ -39,7 +42,7 @@ export default class Strategy {
   start(interval) {
     this.log({
       level: 'info',
-      log: `Starting strategy ${this.constructor.name}`,
+      log: `Starting strategy ${this.name}`,
     });
     // run first loop
     this.loop();
@@ -54,7 +57,7 @@ export default class Strategy {
   async stop() {
     this.log({
       level: 'info',
-      log: `Stopping strategy ${this.constructor.name}`,
+      log: `Stopping strategy ${this.name}`,
     });
     clearInterval(this.mainInterval);
     if (this.running) {

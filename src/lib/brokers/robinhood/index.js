@@ -26,14 +26,20 @@ async function getPositions(db) {
           $average_cost: position.average_buy_price,
           $raw: JSON.stringify(position),
         });
-        positionCb();
       } catch (err) {
         this.log({
           level: 'error',
-          log: err.message,
+          log: JSON.stringify({
+            message: err.message,
+            stack: err.stack,
+          }),
         });
-        positionCb(err);
+        throw err;
       }
+      if (positionCb) {
+        return positionCb();
+      }
+      return null;
     });
   }
   return positions;
@@ -58,14 +64,20 @@ async function getAccounts(db) {
           $type: account.type,
           $raw: JSON.stringify(account),
         });
-        accountCb();
       } catch (err) {
         this.log({
           level: 'error',
-          log: err.message,
+          log: JSON.stringify({
+            message: err.message,
+            stack: err.stack,
+          }),
         });
-        accountCb(err);
+        throw err;
       }
+      if (accountCb) {
+        return accountCb();
+      }
+      return null;
     });
   }
   return accounts;
@@ -80,14 +92,15 @@ async function orderHistory(db, fromDate) {
     try {
       const order = await db.get('select updated_at from orders where created_at = (select MAX(created_at) from orders where broker = $broker) and broker = $broker limit 1;', { $broker: 'robinhood' });
       if (order) {
-        // eslint-disable-next-line no-undef
-        latestCached = order.updated_at;
-        latestCached = DateTime.fromISO(latestCached).plus({ milliseconds: 1 }).toUTC().toISO();
+        latestCached = DateTime.fromISO(order.updated_at).plus({ milliseconds: 1 }).toUTC().toISO();
       }
     } catch (err) {
       this.log({
         level: 'error',
-        log: err.message,
+        log: JSON.stringify({
+          message: err.message,
+          stack: err.stack,
+        }),
       });
     }
   }
@@ -106,7 +119,9 @@ async function orderHistory(db, fromDate) {
         options.updated_at = latestCached;
       }
       const { body } = await this.p_orders(options);
-      orders = [...orders, ...body.results];
+      if (Array.isArray(body.results)) {
+        orders = [...orders, ...body.results];
+      }
       if (body.next) {
         next = new URL(body.next);
         cursor = next.searchParams.get('cursor');
@@ -116,13 +131,16 @@ async function orderHistory(db, fromDate) {
     } catch (err) {
       this.log({
         level: 'error',
-        log: err.message,
+        log: JSON.stringify({
+          message: err.message,
+          stack: err.stack,
+        }),
       });
       next = null;
     }
   } while (next !== null);
 
-  await eachLimit(orders, 10, async (order, orderCb) => {
+  await eachLimit(orders, 10, async (order) => {
     try {
       const instrument = await this.p_url(order.instrument);
       order.instrument = instrument.body;
@@ -152,14 +170,16 @@ async function orderHistory(db, fromDate) {
         $quantity: order.quantity,
         $raw: JSON.stringify(order),
       });
-      orderCb();
     } catch (err) {
       this.log({
         level: 'error',
-        log: err.message,
+        log: JSON.stringify({
+          message: err.message,
+          stack: err.stack,
+        }),
       });
-      orderCb();
     }
+    return null;
   });
 
   return orders;
