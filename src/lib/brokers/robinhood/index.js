@@ -53,15 +53,17 @@ async function getAccounts(db) {
     await eachLimit(accounts, 10, async (account, accountCb) => {
       try {
         await db.run(`
-          INSERT INTO accounts (broker, id, name, type, raw)
-          values ($broker, $id, $name, $type, $raw)
+          INSERT INTO accounts (broker, id, name, type, buying_power, portfolio_cash, raw)
+          values ($broker, $id, $name, $type, $buying_power, $portfolio_cash, $raw)
           ON CONFLICT(broker, id) DO UPDATE
-          SET name = $name, type = $type, raw = $raw;
+          SET name = $name, type = $type, buying_power = $buying_power, portfolio_cash = $portfolio_cash, raw = $raw;
         `, {
           $broker: 'robinhood',
           $id: account.account_number,
           $name: account.account_number,
           $type: account.type,
+          $buying_power: account.buying_power,
+          $portfolio_cash: account.portfolio_cash,
           $raw: JSON.stringify(account),
         });
       } catch (err) {

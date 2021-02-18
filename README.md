@@ -60,6 +60,7 @@ This software is licensed under the ISC license. See [LICENSE](LICENSE) for full
 #### Windows
 For easy setup, you may use chocolatey as outlined below. Otherwise, if you know what you are doing, feel free to install the below dependencies however you see fit.
 ``` powershell
+# run powershell as Administrator
 # install chocloatey - https://chocolatey.org/install
 Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 # install NodeJS - https://nodejs.org/
@@ -68,6 +69,14 @@ choco install nodejs-lts
 choco install sqlite
 # install git
 choco install git
+# install windows build tools - needed for node-gyp
+choco install microsoft-build-tools
+# install python 3 - needed for node-gyp
+choco install python
+# install python 2 - needed for node-sass
+choco install python2
+# install node-gyp
+npm i -g node-gyp
 ```
 #### Mac
 For easy setup, you may use brew as outlined below. Otherwise, if you know what you are doing, feel free to install the below dependencies however you see fit.

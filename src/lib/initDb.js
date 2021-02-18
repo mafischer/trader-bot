@@ -24,7 +24,7 @@ export default async function initDb(home) {
       "class"  TEXT NOT NULL,
       PRIMARY KEY("id" AUTOINCREMENT)
     );
-    INSERT INTO strategies VALUES(1,'Reverse Stock Split Arbitrage','Schedule the purchase of  1 share of stock 10 minutes prior to the market close on last trading day before said stock is scheduled to undergo a reverse stock split.','ReverseStockArbitrage');
+    INSERT INTO strategies VALUES(1,'Reverse Stock Split Arbitrage','Schedule the purchase of  1 share of stock 10 minutes prior to the market close on last trading day before said stock is scheduled to undergo a reverse stock split.','ReverseSplitArbitrage');
     CREATE TABLE IF NOT EXISTS "credentials" (
       "id"  INTEGER NOT NULL CHECK(id=1),
       "credentials"  TEXT NOT NULL,
@@ -82,12 +82,16 @@ export default async function initDb(home) {
       "id"  TEXT NOT NULL,
       "type"  TEXT NOT NULL,
       "name"  TEXT NOT NULL,
+      "buying_power"  REAL,
+      "portfolio_cash"  REAL,
       "raw"  TEXT NOT NULL,
       PRIMARY KEY("broker","id")
     );
     CREATE TABLE IF NOT EXISTS "elected_strategies" (
       "id"  INTEGER NOT NULL,
       "active"  INTEGER NOT NULL,
+      "allocation"  REAL NOT NULL DEFAULT 0,
+      "allocations"  TEXT NOT NULL DEFAULT '[]',
       "updated_at"  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       PRIMARY KEY("id")
     );

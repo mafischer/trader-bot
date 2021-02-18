@@ -74,12 +74,22 @@ ipcRenderer.on('worker-log', async (event, { level, log }) => {
 export default {
   name: 'App',
   created() {
+    const self = this;
     // store log function in vuex
-    this.$store.commit('updateLog', logger.log);
-    this.$store.commit('updateHome', home);
-    if (!this.loggedIn) {
-      this.$router.push('/login');
+    self.$store.commit('updateLog', logger.log);
+    self.$store.commit('updateHome', home);
+    if (!self.loggedIn) {
+      self.$router.push('/login');
     }
+    // poll account data
+    this.poll = setInterval(async () => {
+      if (self.loggedIn && self.$store.state.db) {
+        const accounts = await self.$store.state.db.all(`
+          SELECT id, name, broker, type, portfolio_cash, buying_power FROM accounts;
+        `);
+        self.$store.commit('updateAccounts', accounts);
+      }
+    }, 10000);
   },
   computed: {
     loggedIn() {
@@ -90,6 +100,8 @@ export default {
     },
   },
   data: () => ({
+    db: null,
+    poll: null,
     drawer: null,
     links: [
       ['mdi-home', 'Home', '/'],
