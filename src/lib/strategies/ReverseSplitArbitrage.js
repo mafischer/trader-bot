@@ -132,24 +132,37 @@ export default class ReverseSplitArbitrage extends Strategy {
                 level: 'info',
                 log: `\nquote for ${match.groups.ticker}:\n${JSON.stringify(body)}\n`,
               });
-              if (body !== undefined || (Object.prototype.hasOwnProperty.call(body, 'missing_instruments') && Array.isArray(body.missing_instruments) && body.missing_instruments.indexOf(match.groups.ticker) >= 0)) {
+              if (body === undefined || (Object.prototype.hasOwnProperty.call(body, 'missing_instruments') && (Array.isArray(body.missing_instruments) && body.missing_instruments.indexOf(match.groups.ticker) >= 0))) {
                 self.log({
                   level: 'warn',
                   log: `Broker: ${'robinhood'} does not support ticker: ${match.groups.ticker}`,
                 });
               } else {
-                await self.brokers.robinhood.p_place_buy_order({
-                  type: 'market',
-                  quantity: 1,
-                  instrument: {
-                    url: body.instrument,
-                    symbol: match.groups.ticker,
-                  },
-                });
-                self.log({
-                  level: 'info',
-                  log: `Attempted by of ${match.groups.ticker} on ${'robinhood'}.`,
-                });
+                const { results } = body;
+                if (Array.isArray(results) && results.length > 0) {
+                  self.log({
+                    level: 'info',
+                    log: `Ask price for ${results[0].symbol} is ${results[0].ask_price}, executing limit buy.`,
+                  });
+                  const resp = await self.brokers.robinhood.p_place_buy_order({
+                    type: 'limit',
+                    quantity: 1,
+                    bid_price: results[0].ask_price,
+                    instrument: {
+                      url: results[0].instrument,
+                      symbol: match.groups.ticker,
+                    },
+                  });
+                  self.log({
+                    level: 'info',
+                    log: `Requested limit order of ${match.groups.ticker} on ${'robinhood'}.\n${JSON.stringify(resp)}`,
+                  });
+                } else {
+                  self.log({
+                    level: 'debug',
+                    log: `Unable to buy of ${match.groups.ticker} on ${'robinhood'}. quote response:\n${JSON.stringify(body)}`,
+                  });
+                }
               }
             } catch (err) {
               self.log({

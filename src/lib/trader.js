@@ -164,8 +164,8 @@ export async function main(settings) {
     if (Object.prototype.hasOwnProperty.call(electee, 'active')
       && electee.active === 1) {
       if (Object.prototype.hasOwnProperty.call(electee, 'class')
-        && Object.prototype.hasOwnProperty.call(internal.strategies, electee.className)) {
-        internal.strategies[electee.className].start(10000);
+        && Object.prototype.hasOwnProperty.call(internal.strategies, electee.class)) {
+        internal.strategies[electee.class].start(10000);
       }
     }
   });
