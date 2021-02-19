@@ -84,10 +84,18 @@ export default {
     // poll account data
     this.poll = setInterval(async () => {
       if (self.loggedIn && self.$store.state.db) {
-        const accounts = await self.$store.state.db.all(`
-          SELECT id, name, broker, type, portfolio_cash, buying_power FROM accounts;
-        `);
+        const [accounts, positions] = await Promise.all([
+          self.$store.state.db.all(`
+            SELECT id, name, broker, type, portfolio_cash, buying_power FROM accounts;
+          `),
+          self.$store.state.db.all(`
+            SELECT broker, symbol, qty, average_cost
+            FROM positions
+            WHERE qty > 0;
+          `),
+        ]);
         self.$store.commit('updateAccounts', accounts);
+        self.$store.commit('updatePositions', positions);
       }
     }, 10000);
   },
