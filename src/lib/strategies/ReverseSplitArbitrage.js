@@ -124,7 +124,8 @@ export default class ReverseSplitArbitrage extends Strategy {
               level: 'info',
               log: `@${tweeter.username} said to buy ${match.groups.qty} of ${match.groups.ticker} by the close of ${DateTime.fromFormat(match.groups.date, 'LLL dd, yyyy', { zone: 'America/New_York', hour: 16 }).toISO()}!!`,
             });
-            // execute market buy for each enabled broker
+            // TODO: execute market buy for each enabled broker
+            // TODO: ensure orders do not exceed capital limit per broker.
             try {
               const response = await self.brokers.robinhood.p_quote_data(match.groups.ticker);
               const { body } = response;

@@ -22,6 +22,7 @@
 import { remote, ipcRenderer } from 'electron';
 import path from 'path';
 import prompt from 'electron-prompt';
+import rbnhd from '../lib/brokers/robinhood';
 import {
   login,
   robinhood,
@@ -49,13 +50,14 @@ export default {
     };
   },
   updated() {
+    const self = this;
     this.$nextTick(async () => {
       // Code that will run only after the
       // entire view has been re-rendered
-      if (this.$store.state.credentials) {
-        const missing = await missingCredentials(this.$store.state.credentials);
-        if (missing.length === 0) {
-          this.$router.push('/');
+      if (self.$store.state.credentials) {
+        const missing = await missingCredentials(self.$store.state.credentials);
+        if (missing.length === 0 && self.$router.history.current.path !== '/') {
+          self.$router.push('/');
         }
       }
     });
@@ -90,13 +92,23 @@ export default {
           //   message: 'All services successfully logged in!',
           //   title: 'Logged In',
           // });
+          const Robinhood = await rbnhd(self.$store.state.log, credentials.robinhood);
+          self.$store.commit('addBroker', {
+            name: 'robinhood',
+            broker: Robinhood,
+          });
           ipcRenderer.send('login', credentials);
           // redirect to home
-          this.$router.push({ path: '/' });
+          if (self.$router.history.current.path !== '/') {
+            this.$router.push({ path: '/' });
+          }
         }
       } catch (err) {
         this.password = null;
-        dialog.showErrorBox('Login Failed', err.message);
+        dialog.showErrorBox('Login Failed', JSON.stringify({
+          message: err.message,
+          stack: err.stack,
+        }));
       }
     },
     async robinhoodCb() {
@@ -140,7 +152,10 @@ export default {
         self.rpw = null;
         self.ruser = null;
         console.log(err);
-        dialog.showErrorBox('Login Failed', err.message);
+        dialog.showErrorBox('Login Failed', JSON.stringify({
+          message: err.message,
+          stack: err.stack,
+        }));
       }
     },
     async twitterCb() {

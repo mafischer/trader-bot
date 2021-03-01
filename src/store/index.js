@@ -1,5 +1,6 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
+import equal from 'deep-equal';
 
 Vue.use(Vuex);
 
@@ -10,6 +11,7 @@ export default new Vuex.Store({
     db: null,
     log: null,
     home: null,
+    brokers: {},
     accounts: [],
     positions: [],
   },
@@ -30,10 +32,21 @@ export default new Vuex.Store({
       state.home = home;
     },
     updateAccounts(state, accounts) {
-      state.accounts = accounts;
+      if (!equal(state.accounts, accounts)) {
+        state.accounts = accounts;
+      }
     },
     updatePositions(state, positions) {
-      state.positions = positions;
+      if (!equal(state.postions, positions)) {
+        state.positions = positions;
+      }
+    },
+    addBroker(state, broker) {
+      const brokers = {
+        ...state.brokers,
+      };
+      brokers[broker.name] = broker.broker;
+      state.brokers = brokers;
     },
   },
   actions: {

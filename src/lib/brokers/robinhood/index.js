@@ -1,9 +1,39 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable no-await-in-loop */
 import { promisify } from 'util';
-import { eachLimit } from 'async-es';
+import { eachLimit, each } from 'async-es';
 import Robinhood from 'robinhood';
 import { DateTime } from 'luxon';
+import memoize from 'memoizee';
+
+async function getPortfolioHistoricals({ interval, span }) {
+  const historicals = {};
+  const positions = await this.getPositions();
+  await eachLimit(positions, 10, async (position, positionCb) => {
+    try {
+      const qty = parseFloat(position.quantity);
+      if (qty > 0) {
+        const { body } = await this.p_historicals(position.instrument.symbol, interval, span);
+        historicals[position.instrument.symbol] = body;
+      }
+    } catch (err) {
+      this.log({
+        level: 'error',
+        log: JSON.stringify({
+          message: err.message,
+          stack: err.stack,
+        }),
+      });
+      throw err;
+    }
+    // quirky hack for inconsistent async-es library
+    if (positionCb) {
+      return positionCb();
+    }
+    return null;
+  });
+  return historicals;
+}
 
 async function getPositions(db) {
   let positions = [];
@@ -12,20 +42,49 @@ async function getPositions(db) {
     positions = body.results;
     await eachLimit(positions, 10, async (position, positionCb) => {
       try {
-        const instrument = await this.p_url(position.instrument);
+        const instrument = await this.m_url(position.instrument);
         position.instrument = instrument.body;
-        await db.run(`
-          INSERT INTO positions (broker, symbol, qty, average_cost, raw)
-          values ($broker, $symbol, $qty, $average_cost, $raw)
-          ON CONFLICT(broker, symbol) DO UPDATE
-          SET qty = $qty, average_cost = $average_cost, raw = $raw;
-        `, {
-          $broker: 'robinhood',
-          $symbol: position.instrument.symbol,
-          $qty: position.quantity,
-          $average_cost: position.average_buy_price,
-          $raw: JSON.stringify(position),
-        });
+        // update db if/when db object is provided
+        if (db !== undefined) {
+          if (Object.prototype.hasOwnProperty.call(position.instrument, 'splits')) {
+            const rsp = await this.m_url(position.instrument.splits);
+            // const rsp = await this.m_splits(position.instrument.symbol);
+            const splits = rsp.body;
+            await each(splits.results, async ({ url }, urlCb) => {
+              const splt = await this.m_url(url);
+              const split = splt.body;
+              await db.run(`
+                INSERT OR IGNORE INTO splits
+                (symbol, date, multiplier, divisor)
+                values ($symbol, $date, $multiplier, $divisor);
+              `, {
+                $symbol: position.instrument.symbol,
+                $divisor: split.divisor,
+                $multiplier: split.multiplier,
+                $date: split.execution_date,
+              });
+
+              // quirky hack for inconsistent async-es library
+              if (urlCb) {
+                return urlCb();
+              }
+              return null;
+            });
+          }
+
+          await db.run(`
+            INSERT INTO positions (broker, symbol, qty, average_cost, raw)
+            values ($broker, $symbol, $qty, $average_cost, $raw)
+            ON CONFLICT(broker, symbol) DO UPDATE
+            SET qty = $qty, average_cost = $average_cost, raw = $raw;
+          `, {
+            $broker: 'robinhood',
+            $symbol: position.instrument.symbol,
+            $qty: position.quantity,
+            $average_cost: position.average_buy_price,
+            $raw: JSON.stringify(position),
+          });
+        }
       } catch (err) {
         this.log({
           level: 'error',
@@ -36,6 +95,7 @@ async function getPositions(db) {
         });
         throw err;
       }
+      // quirky hack for inconsistent async-es library
       if (positionCb) {
         return positionCb();
       }
@@ -76,6 +136,7 @@ async function getAccounts(db) {
         });
         throw err;
       }
+      // quirky hack for inconsistent async-es library
       if (accountCb) {
         return accountCb();
       }
@@ -144,7 +205,7 @@ async function orderHistory(db, fromDate) {
 
   await eachLimit(orders, 10, async (order) => {
     try {
-      const instrument = await this.p_url(order.instrument);
+      const instrument = await this.m_url(order.instrument);
       order.instrument = instrument.body;
       let price = null;
       if (order.average_price) {
@@ -252,6 +313,24 @@ export default (log, token) => (
       // options_positions
       rh.p_options_positions = promisify(rh.options_positions);
 
+      // memoized functions
+      // investment_profile(callback)
+      // rh.m_investment_profile = memoize(rh.p_investment_profile, { promise: true, maxAge: 14400000 });
+      // instruments(symbol, callback)
+      // rh.m_insturments = memoize(rh.p_instruments, { promise: true, maxAge: 14400000 });
+      // user(callback)
+      // rh.m_user = memoize(rh.p_user, { promise: true, maxAge: 14400000 });
+      // dividends(callback)
+      // rh.m_dividends = memoize(rh.p_dividends, { promise: true, maxAge: 14400000 });
+      // splits(instrument, callback)
+      rh.m_splits = memoize(rh.p_splits, { promise: true, maxAge: 14400000 });
+      // historicals(symbol, intv, span, callback)
+      rh.m_historicals = memoize(rh.p_historicals, { promise: true, maxAge: 300000 });
+      // url(url, callback)
+      rh.m_url = memoize(rh.p_url, { promise: true, maxAge: 60000 });
+      // tag(tag, callback)
+      // rh.m_tag = memoize(rh.p_tag, { promise: true, maxAge: 14400000 });
+
       // custom functions
       // orderHistory
       rh.orderHistory = orderHistory;
@@ -259,6 +338,8 @@ export default (log, token) => (
       rh.getAccounts = getAccounts;
       // getPositions
       rh.getPositions = getPositions;
+      // getPortfolioHistoricals
+      rh.getPortfolioHistoricals = getPortfolioHistoricals;
 
       // return robinhood object
       resolve(rh);

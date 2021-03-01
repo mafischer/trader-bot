@@ -103,7 +103,10 @@ export async function main(settings) {
   });
 
   // attach secondary databases
-  await db.run(`ATTACH DATABASE '${path.resolve(settings.home, 'twitter.db')}' AS twitter;`);
+  const databases = (await db.all('PRAGMA database_list;')).map((o) => (o.name));
+  if (databases.indexOf('twitter') === -1) {
+    await db.run(`ATTACH DATABASE '${path.resolve(settings.home, 'twitter.db')}' AS twitter;`);
+  }
 
   // wait for api initialization
   const API = await api(settings.credentials);
@@ -139,6 +142,13 @@ export async function main(settings) {
     level: 'info',
     log: `Positions updated... ${(positions.filter((p) => (parseFloat(p.quantity) > 0))).length} stock(s) in portfolio.`,
   });
+
+  // get portfolio historicals
+  const historicals = await Brokers.robinhood.getPortfolioHistoricals({
+    span: 'week',
+    interval: '5minute',
+  });
+  console.log(historicals);
 
   // load user's elected strategies
   const elected = await db.all(`
