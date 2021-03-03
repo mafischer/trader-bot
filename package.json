@@ -30,7 +30,7 @@
     "robinhood": "github:mafischer/robinhood-node#_login",
     "roboto-fontface": "^0.10.0",
     "sqlite": "^4.0.19",
-    "sqlite3": "^5.0.1",
+    "sqlite3": "^5.0.2",
     "twitter-v2": "^1.0.2",
     "vex-js": "^4.1.0",
     "vue": "^2.6.11",
