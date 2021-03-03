@@ -21,7 +21,7 @@
     "async-es": "^3.2.0",
     "chart.js": "^2.9.4",
     "chartjs-adapter-luxon": "^0.2.2",
-    "core-js": "^3.6.5",
+    "core-js": "^3.9.1",
     "cryptr": "^6.0.2",
     "deep-equal": "^2.0.5",
     "electron-prompt": "^1.6.1",
