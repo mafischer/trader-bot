@@ -39,7 +39,7 @@
     "vuetify": "^2.4.6",
     "vuex": "^3.4.0",
     "winston": "^3.3.3",
-    "winston-daily-rotate-file": "^4.5.0"
+    "winston-daily-rotate-file": "^4.5.1"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "~4.5.0",
