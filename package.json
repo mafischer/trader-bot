@@ -24,7 +24,7 @@
     "core-js": "^3.9.1",
     "cryptr": "^6.0.2",
     "deep-equal": "^2.0.5",
-    "electron-prompt": "^1.6.1",
+    "electron-prompt": "^1.6.2",
     "luxon": "^1.26.0",
     "memoizee": "^0.4.15",
     "robinhood": "github:mafischer/robinhood-node#_login",
