@@ -36,13 +36,13 @@
     "vue": "^2.6.11",
     "vue-chartjs": "^3.5.1",
     "vue-router": "^3.2.0",
-    "vuetify": "^2.4.6",
+    "vuetify": "^2.4.8",
     "vuex": "^3.4.0",
     "winston": "^3.3.3",
     "winston-daily-rotate-file": "^4.5.1"
   },
   "devDependencies": {
-    "@vue/cli-plugin-babel": "~4.5.0",
+    "@vue/cli-plugin-babel": "~4.5.12",
     "@vue/cli-plugin-eslint": "~4.5.12",
     "@vue/cli-plugin-router": "~4.5.0",
     "@vue/cli-plugin-unit-mocha": "~4.5.0",
